@@ -3,35 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaladWebhook", "SaladWebhook.csproj", "{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaladWebhook", "SaladWebhook.csproj", "{1001F805-536C-4E15-BD79-DCC7E13D9F5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Debug|x64.ActiveCfg = Debug|x64
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Debug|x64.Build.0 = Debug|x64
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Debug|x86.ActiveCfg = Debug|x86
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Debug|x86.Build.0 = Debug|x86
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Release|x64.ActiveCfg = Release|x64
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Release|x64.Build.0 = Release|x64
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Release|x86.ActiveCfg = Release|x86
-		{418DF81F-E1C1-4A7A-B7BB-9512D31B7E7B}.Release|x86.Build.0 = Release|x86
+		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {CF218F41-451F-4145-B7ED-C39443F63DED}
+		SolutionGuid = {855FE624-9F00-4A36-8A59-A389C62E73D6}
 	EndGlobalSection
 EndGlobal
