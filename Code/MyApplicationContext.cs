@@ -17,6 +17,7 @@ namespace SaladWebhook
 
         public MyApplicationContext()
         {
+            MessageBox.Show("Webhook has been started.", "Started");
             Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
             InitializeComponent();
             TrayIcon.Visible = true;
@@ -78,12 +79,6 @@ namespace SaladWebhook
         {
             //Cleanup so that the icon will be removed when the application is closed
             TrayIcon.Visible = false;
-        }
-
-        private void TrayIcon_DoubleClick(object sender, EventArgs e)
-        {
-            //Here, you can do stuff if the tray icon is doubleclicked
-            TrayIcon.ShowBalloonTip(10000);
         }
 
         private void Exit_Click(object sender, EventArgs e)

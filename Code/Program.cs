@@ -44,7 +44,6 @@ namespace SaladWebhook
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MyApplicationContext());
-            LoadEarnings();
         }
 
 
@@ -56,6 +55,13 @@ namespace SaladWebhook
                 waittime = (int)Saving.waitTimeMin;
                 postIfChange = Saving.onlyIfNewPost;
                 Webhook = Saving.webhook;
+            }
+            else
+            {
+                Form1 loginform = new Form1();
+                loginform.Show();
+                Settings Wsettings = new Settings();
+                Wsettings.Show();
             }
             var settings = new CefSettings();
             settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SaladWebHook\\CefSharp\\Cache");
