@@ -1,0 +1,1037 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CefSharp.OffScreen</name>
+    </assembly>
+    <members>
+        <member name="T:CefSharp.OffScreen.BitmapBuffer">
+            <summary>
+            BitmapBuffer contains a byte[] used to store the Bitmap generated from <see cref="M:CefSharp.OffScreen.IRenderHandler.OnPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr,System.Int32,System.Int32)"/>
+            and associated methods for updating that buffer and creating a <see cref="T:System.Drawing.Bitmap"/> from the actaual Buffer
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.BitmapBuffer.NumberOfBytes">
+            <summary>
+            Number of bytes
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.BitmapBuffer.Width">
+            <summary>
+            Width
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.BitmapBuffer.Height">
+            <summary>
+            Height
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.BitmapBuffer.DirtyRect">
+            <summary>
+            Dirty Rect - unified region containing th
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.BitmapBuffer.BitmapLock">
+            <summary>
+            Locking object used to syncronise access to the underlying buffer
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.BitmapBuffer.#ctor(System.Object)">
+            <summary>
+            Create a new instance of BitmapBuffer
+            </summary>
+            <param name="bitmapLock">Reference to the bitmapLock, a shared lock object is expected</param>
+        </member>
+        <member name="P:CefSharp.OffScreen.BitmapBuffer.Buffer">
+            <summary>
+            Get the byte[] array that represents the Bitmap
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.BitmapBuffer.UpdateBuffer(System.Int32,System.Int32,System.IntPtr,CefSharp.Structs.Rect)">
+            <summary>
+            Copy data from the unmanaged buffer (IntPtr) into our managed buffer.
+            Locks BitmapLock before performing any update
+            </summary>
+            <param name="width">width</param>
+            <param name="height">height</param>
+            <param name="buffer">pointer to unmanaged buffer (void*)</param>
+            <param name="dirtyRect">rectangle to be updated</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.BitmapBuffer.CreateBitmap">
+            <summary>
+            Creates a new Bitmap given with the current Width/Height and <see cref="F:CefSharp.OffScreen.BitmapBuffer.Format"/>
+            then copies the buffer that represents the bitmap.
+            Locks <see cref="P:CefSharp.OffScreen.BitmapBuffer.BitmapLock"/> before creating the <see cref="T:System.Drawing.Bitmap"/>
+            </summary>
+            <returns>A new bitmap</returns>
+        </member>
+        <member name="T:CefSharp.OffScreen.CefSettings">
+            <summary>
+            Initialization settings. Many of these and other settings can also configured
+            using command-line switches.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.CefSettings.#ctor">
+            <summary>
+            Intialize with default values
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.CefSettings.EnableAudio">
+            <summary>
+            Enables Audio - by default audio is muted in the OffScreen implementatio.
+            This removes the mute-audio command line flag
+            </summary>
+        </member>
+        <member name="T:CefSharp.OffScreen.ChromiumWebBrowser">
+            <summary>
+            An offscreen instance of Chromium that you can use to take
+            snapshots or evaluate JavaScript.
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.managedCefBrowserAdapter">
+            <summary>
+            The managed cef browser adapter
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.size">
+            <summary>
+            Size of the Chromium viewport.
+            This must be set to something other than 0x0 otherwise Chromium will not render,
+            and the ScreenshotAsync task will deadlock.
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.browser">
+            <summary>
+            The browser
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.browserCreated">
+            <summary>
+            Flag to guard the creation of the underlying offscreen browser - only one instance can be created
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.disposeSignaled">
+            <summary>
+            The value for disposal, if it's 1 (one) then this instance is either disposed
+            or in the process of getting disposed
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.IsDisposed">
+            <summary>
+            Gets a value indicating whether this instance is disposed.
+            </summary>
+            <value><see langword="true" /> if this instance is disposed; otherwise, <see langword="false" />.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.IsBrowserInitialized">
+            <summary>
+            A flag that indicates whether the WebBrowser is initialized (true) or not (false).
+            </summary>
+            <value><c>true</c> if this instance is browser initialized; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.IsLoading">
+            <summary>
+            A flag that indicates whether the control is currently loading one or more web pages (true) or not (false).
+            </summary>
+            <value><c>true</c> if this instance is loading; otherwise, <c>false</c>.</value>
+            <remarks>In the WPF control, this property is implemented as a Dependency Property and fully supports data
+            binding.</remarks>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.TooltipText">
+            <summary>
+            The text that will be displayed as a ToolTip
+            </summary>
+            <value>The tooltip text.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.Address">
+            <summary>
+            The address (URL) which the browser control is currently displaying.
+            Will automatically be updated as the user navigates to another page (e.g. by clicking on a link).
+            </summary>
+            <value>The address.</value>
+            <remarks>In the WPF control, this property is implemented as a Dependency Property and fully supports data
+            binding.</remarks>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.CanGoBack">
+            <summary>
+            A flag that indicates whether the state of the control current supports the GoBack action (true) or not (false).
+            </summary>
+            <value><c>true</c> if this instance can go back; otherwise, <c>false</c>.</value>
+            <remarks>In the WPF control, this property is implemented as a Dependency Property and fully supports data
+            binding.</remarks>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.CanGoForward">
+            <summary>
+            A flag that indicates whether the state of the control currently supports the GoForward action (true) or not (false).
+            </summary>
+            <value><c>true</c> if this instance can go forward; otherwise, <c>false</c>.</value>
+            <remarks>In the WPF control, this property is implemented as a Dependency Property and fully supports data
+            binding.</remarks>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.RequestContext">
+            <summary>
+            Gets the request context.
+            </summary>
+            <value>The request context.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.RenderHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.OffScreen.IRenderHandler" /> and assign to handle events related to browser rendering.
+            </summary>
+            <value>The render handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.AccessibilityHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IAccessibilityHandler" /> to handle events related to accessibility.
+            </summary>
+            <value>The accessibility handler.</value>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.BrowserInitialized">
+            <summary>
+            Event called after the underlying CEF browser instance has been created. 
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            (The exception to this is when you're running with settings.MultiThreadedMessageLoop = false, then they'll be the same thread).
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.AddressChanged">
+            <summary>
+            Occurs when the browser address changed.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            (The exception to this is when you're running with settings.MultiThreadedMessageLoop = false, then they'll be the same thread).
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.TitleChanged">
+            <summary>
+            Occurs when [title changed].
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            (The exception to this is when you're running with settings.MultiThreadedMessageLoop = false, then they'll be the same thread).
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.Paint">
+            <summary>
+            Fired on the CEF UI thread, which by default is not the same as your application main thread.
+            Called when an element should be painted. Pixel values passed to this method are scaled relative to view coordinates
+            based on the value of ScreenInfo.DeviceScaleFactor returned from GetScreenInfo. 
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.AfterPaint">
+            <summary>
+            Used by <see cref="M:CefSharp.OffScreen.ChromiumWebBrowser.ScreenshotAsync(System.Boolean,CefSharp.OffScreen.PopupBlending)"/> as the <see cref="E:CefSharp.OffScreen.ChromiumWebBrowser.Paint"/>
+            event happens before the bitmap buffer is updated. We do this to allow users to mark <see cref="P:CefSharp.OffScreen.OnPaintEventArgs.Handled"/>
+            to true and stop the buffer from being updated.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.#ctor(CefSharp.Web.HtmlString,CefSharp.IBrowserSettings,CefSharp.IRequestContext,System.Boolean)">
+            <summary>
+            Create a new OffScreen Chromium Browser. If you use <see cref="P:CefSharp.JavascriptBinding.JavascriptBindingSettings.LegacyBindingEnabled"/> = true then you must
+            set <paramref name="automaticallyCreateBrowser"/> to false and call <see cref="M:CefSharp.OffScreen.ChromiumWebBrowser.CreateBrowser(CefSharp.IWindowInfo,CefSharp.IBrowserSettings)"/> after the objects are registered.
+            </summary>
+            <param name="html">html string to be initially loaded in the browser.</param>
+            <param name="browserSettings">The browser settings to use. If null, the default settings are used.</param>
+            <param name="requestContext">See <see cref="P:CefSharp.OffScreen.ChromiumWebBrowser.RequestContext" /> for more details. Defaults to null</param>
+            <param name="automaticallyCreateBrowser">automatically create the underlying Browser</param>
+            <exception cref="T:System.InvalidOperationException">Cef::Initialize() failed</exception>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.#ctor(System.String,CefSharp.IBrowserSettings,CefSharp.IRequestContext,System.Boolean)">
+            <summary>
+            Create a new OffScreen Chromium Browser. If you use <see cref="P:CefSharp.JavascriptBinding.JavascriptBindingSettings.LegacyBindingEnabled"/> = true then you must
+            set <paramref name="automaticallyCreateBrowser"/> to false and call <see cref="M:CefSharp.OffScreen.ChromiumWebBrowser.CreateBrowser(CefSharp.IWindowInfo,CefSharp.IBrowserSettings)"/> after the objects are registered.
+            </summary>
+            <param name="address">Initial address (url) to load</param>
+            <param name="browserSettings">The browser settings to use. If null, the default settings are used.</param>
+            <param name="requestContext">See <see cref="P:CefSharp.OffScreen.ChromiumWebBrowser.RequestContext" /> for more details. Defaults to null</param>
+            <param name="automaticallyCreateBrowser">automatically create the underlying Browser</param>
+            <exception cref="T:System.InvalidOperationException">Cef::Initialize() failed</exception>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:CefSharp.OffScreen.ChromiumWebBrowser"/> class.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.Dispose">
+            <summary>
+            Releases all resources used by the <see cref="T:CefSharp.OffScreen.ChromiumWebBrowser"/> object
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.Dispose(System.Boolean)">
+            <summary>
+            Releases unmanaged and - optionally - managed resources for the <see cref="T:CefSharp.OffScreen.ChromiumWebBrowser"/>
+            </summary>
+            <param name="disposing"><see langword="true" /> to release both managed and unmanaged resources; <see langword="false" /> to release only unmanaged resources.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CreateBrowser(CefSharp.IWindowInfo,CefSharp.IBrowserSettings)">
+            <summary>
+            Create the underlying browser. The instance address, browser settings and request context will be used.
+            </summary>
+            <param name="windowInfo">Window information used when creating the browser</param>
+            <param name="browserSettings">Browser initialization settings</param>
+            <exception cref="T:System.Exception">An instance of the underlying offscreen browser has already been created, this method can only be called once.</exception>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.Size">
+            <summary>
+            Get/set the size of the Chromium viewport, in pixels.
+            This also changes the size of the next rendered bitmap.
+            </summary>
+            <value>The size.</value>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.ScreenshotOrNull(CefSharp.OffScreen.PopupBlending)">
+            <summary>
+            Immediately returns a copy of the last rendering from Chrome,
+            or null if no rendering has occurred yet.
+            Chrome also renders the page loading, so if you want to see a complete rendering,
+            only start this task once your page is loaded (which you can detect via FrameLoadEnd
+            or your own heuristics based on evaluating JavaScript).
+            It is your responsibility to dispose the returned Bitmap.
+            The bitmap size is determined by the Size property set earlier.
+            </summary>
+            <param name="blend">Choose which bitmap to retrieve, choose <see cref="F:CefSharp.OffScreen.PopupBlending.Blend"/> for a merged bitmap.</param>
+            <returns>Bitmap.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.ScreenshotAsync(System.Boolean,CefSharp.OffScreen.PopupBlending)">
+            <summary>
+            Starts a task that waits for the next rendering from Chrome.
+            Chrome also renders the page loading, so if you want to see a complete rendering,
+            only start this task once your page is loaded (which you can detect via FrameLoadEnd
+            or your own heuristics based on evaluating JavaScript).
+            It is your responsibility to dispose the returned Bitmap.
+            The bitmap size is determined by the Size property set earlier.
+            </summary>
+            <param name="ignoreExistingScreenshot">Ignore existing bitmap (if any) and return the next available bitmap</param>
+            <param name="blend">Choose which bitmap to retrieve, choose <see cref="F:CefSharp.OffScreen.PopupBlending.Blend"/> for a merged bitmap.</param>
+            <returns>Task&lt;Bitmap&gt;.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.Load(System.String)">
+            <summary>
+            Loads the specified URL.
+            </summary>
+            <param name="url">The URL to be loaded.</param>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.JavascriptObjectRepository">
+            <summary>
+            The javascript object repository, one repository per ChromiumWebBrowser instance.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#IWebBrowser#Focus">
+            <summary>
+            Has Focus - Always False
+            </summary>
+            <returns>returns false</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.GetBrowser">
+            <summary>
+            Returns the current CEF Browser Instance
+            </summary>
+            <returns>browser instance or null</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#GetScreenInfo">
+            <summary>
+            Gets the screen information (scale factor).
+            </summary>
+            <returns>ScreenInfo.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.GetScreenInfo">
+            <summary>
+            Gets the screen information (scale factor).
+            </summary>
+            <returns>ScreenInfo.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#GetViewRect">
+            <summary>
+            Gets the view rect (width, height)
+            </summary>
+            <returns>ViewRect.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.GetViewRect">
+            <summary>
+            Gets the view rect (width, height)
+            </summary>
+            <returns>ViewRect.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#GetScreenPoint(System.Int32,System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+            Called to retrieve the translation from view coordinates to actual screen coordinates. 
+            </summary>
+            <param name="viewX">x</param>
+            <param name="viewY">y</param>
+            <param name="screenX">screen x</param>
+            <param name="screenY">screen y</param>
+            <returns>Return true if the screen coordinates were provided.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.GetScreenPoint(System.Int32,System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+            Called to retrieve the translation from view coordinates to actual screen coordinates. 
+            </summary>
+            <param name="viewX">x</param>
+            <param name="viewY">y</param>
+            <param name="screenX">screen x</param>
+            <param name="screenY">screen y</param>
+            <returns>Return true if the screen coordinates were provided.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#OnAcceleratedPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr)">
+            <summary>
+            Called when an element has been rendered to the shared texture handle.
+            This method is only called when <see cref="P:CefSharp.IWindowInfo.SharedTextureEnabled"/> is set to true
+            </summary>
+            <param name="type">indicates whether the element is the view or the popup widget.</param>
+            <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
+            <param name="sharedHandle">is the handle for a D3D11 Texture2D that can be accessed via ID3D11Device using the OpenSharedResource method.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#OnPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr,System.Int32,System.Int32)">
+            <summary>
+            Called when an element should be painted. (Invoked from CefRenderHandler.OnPaint)
+            </summary>
+            <param name="type">indicates whether the element is the view or the popup widget.</param>
+            <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
+            <param name="buffer">The bitmap will be will be  width * height *4 bytes in size and represents a BGRA image with an upper-left origin</param>
+            <param name="width">width</param>
+            <param name="height">height</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#OnCursorChange(System.IntPtr,CefSharp.Enums.CursorType,CefSharp.Structs.CursorInfo)">
+            <summary>
+            Called when the browser's cursor has changed. . 
+            </summary>
+            <param name="cursor">If type is Custom then customCursorInfo will be populated with the custom cursor information</param>
+            <param name="type">cursor type</param>
+            <param name="customCursorInfo">custom cursor Information</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#StartDragging(CefSharp.IDragData,CefSharp.Enums.DragOperationsMask,System.Int32,System.Int32)">
+            <summary>
+            Starts dragging.
+            </summary>
+            <param name="dragData">The drag data.</param>
+            <param name="mask">The mask.</param>
+            <param name="x">The x.</param>
+            <param name="y">The y.</param>
+            <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#OnPopupShow(System.Boolean)">
+            <summary>
+            Sets the popup is open.
+            </summary>
+            <param name="show">if set to <c>true</c> [show].</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IRenderWebBrowser#OnPopupSize(CefSharp.Structs.Rect)">
+            <summary>
+            Called when the browser wants to move or resize the popup widget. 
+            </summary>
+            <param name="rect">contains the new location and size in view coordinates. </param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#OnAfterBrowserCreated(CefSharp.IBrowser)">
+            <summary>
+            Called when [after browser created].
+            </summary>
+            <param name="browser">The browser.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#SetAddress(CefSharp.AddressChangedEventArgs)">
+            <summary>
+            Sets the address.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.AddressChangedEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#SetLoadingStateChange(CefSharp.LoadingStateChangedEventArgs)">
+            <summary>
+            Sets the loading state change.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.LoadingStateChangedEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#SetTitle(CefSharp.TitleChangedEventArgs)">
+            <summary>
+            Sets the title.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.TitleChangedEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#SetTooltipText(System.String)">
+            <summary>
+            Sets the tooltip text.
+            </summary>
+            <param name="tooltipText">The tooltip text.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.MergeBitmaps(System.Drawing.Bitmap,System.Drawing.Bitmap,System.Drawing.Point)">
+            <summary>
+            Creates a new bitmap with the dimensions of firstBitmap, then
+            draws the firstBitmap, then overlays the secondBitmap
+            </summary>
+            <param name="firstBitmap">First bitmap, this will be the first image drawn</param>
+            <param name="secondBitmap">Second bitmap, this image will be drawn on the first</param>
+            <param name="secondBitmapPosition">Position of the second bitmap</param>
+            <returns>The merged bitmap, size of firstBitmap</returns>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.canExecuteJavascriptInMainFrameId">
+            <summary>
+            Used as workaround for issue https://github.com/cefsharp/CefSharp/issues/3021
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.ChromiumWebBrowser.browserInitialized">
+            <summary>
+            The browser initialized - boolean represented as 0 (false) and 1(true) as we use Interlocker to increment/reset
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.CanExecuteJavascriptInMainFrame">
+            <summary>
+            A flag that indicates if you can execute javascript in the main frame.
+            Flag is set to true in IRenderProcessMessageHandler.OnContextCreated.
+            and false in IRenderProcessMessageHandler.OnContextReleased
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.DialogHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IDialogHandler" /> and assign to handle dialog events.
+            </summary>
+            <value>The dialog handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.JsDialogHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IJsDialogHandler" /> and assign to handle events related to JavaScript Dialogs.
+            </summary>
+            <value>The js dialog handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.KeyboardHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IKeyboardHandler" /> and assign to handle events related to key press.
+            </summary>
+            <value>The keyboard handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.RequestHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IRequestHandler" /> and assign to handle events related to browser requests.
+            </summary>
+            <value>The request handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.DownloadHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IDownloadHandler" /> and assign to handle events related to downloading files.
+            </summary>
+            <value>The download handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.LoadHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.ILoadHandler" /> and assign to handle events related to browser load status.
+            </summary>
+            <value>The load handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.LifeSpanHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.ILifeSpanHandler" /> and assign to handle events related to popups.
+            </summary>
+            <value>The life span handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.DisplayHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IDisplayHandler" /> and assign to handle events related to browser display state.
+            </summary>
+            <value>The display handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.MenuHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IContextMenuHandler" /> and assign to handle events related to the browser context menu
+            </summary>
+            <value>The menu handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.RenderProcessMessageHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IRenderProcessMessageHandler" /> and assign to handle messages from the render process.
+            </summary>
+            <value>The render process message handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.FindHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IFindHandler" /> to handle events related to find results.
+            </summary>
+            <value>The find handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.AudioHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IAudioHandler" /> to handle audio events.
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.FocusHandler">
+            <summary>
+            The <see cref="T:CefSharp.IFocusHandler" /> for this ChromiumWebBrowser.
+            </summary>
+            <value>The focus handler.</value>
+            <remarks>If you need customized focus handling behavior for WinForms, the suggested
+            best practice would be to inherit from DefaultFocusHandler and try to avoid
+            needing to override the logic in OnGotFocus. The implementation in
+            DefaultFocusHandler relies on very detailed behavior of how WinForms and
+            Windows interact during window activation.</remarks>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.DragHandler">
+            <summary>
+            Implement <see cref="T:CefSharp.IDragHandler" /> and assign to handle events related to dragging.
+            </summary>
+            <value>The drag handler.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.ResourceRequestHandlerFactory">
+            <summary>
+            Implement <see cref="T:CefSharp.IResourceRequestHandlerFactory" /> and control the loading of resources
+            </summary>
+            <value>The resource handler factory.</value>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.LoadError">
+            <summary>
+            Event handler that will get called when the resource load for a navigation fails or is canceled.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.FrameLoadStart">
+            <summary>
+            Event handler that will get called when the browser begins loading a frame. Multiple frames may be loading at the same
+            time. Sub-frames may start or continue loading after the main frame load has ended. This method may not be called for a
+            particular frame if the load request for that frame fails. For notification of overall browser load status use
+            OnLoadingStateChange instead.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            </summary>
+            <remarks>Whilst this may seem like a logical place to execute js, it's called before the DOM has been loaded, implement
+            <see cref="M:CefSharp.IRenderProcessMessageHandler.OnContextCreated(CefSharp.IWebBrowser,CefSharp.IBrowser,CefSharp.IFrame)" /> as it's called when the underlying V8Context is created
+            </remarks>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.FrameLoadEnd">
+            <summary>
+            Event handler that will get called when the browser is done loading a frame. Multiple frames may be loading at the same
+            time. Sub-frames may start or continue loading after the main frame load has ended. This method will always be called
+            for all frames irrespective of whether the request completes successfully.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.LoadingStateChanged">
+            <summary>
+            Event handler that will get called when the Loading state has changed.
+            This event will be fired twice. Once when loading is initiated either programmatically or
+            by user action, and once when loading is terminated due to completion, cancellation of failure.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.ConsoleMessage">
+            <summary>
+            Event handler for receiving Javascript console messages being sent from web pages.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            (The exception to this is when you're running with settings.MultiThreadedMessageLoop = false, then they'll be the same thread).
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.StatusMessage">
+            <summary>
+            Event handler for changes to the status message.
+            It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
+            thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang.
+            To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
+            (The exception to this is when you're running with settings.MultiThreadedMessageLoop = false, then they'll be the same thread).
+            </summary>
+        </member>
+        <member name="E:CefSharp.OffScreen.ChromiumWebBrowser.JavascriptMessageReceived">
+            <summary>
+            Event handler that will get called when the message that originates from CefSharp.PostMessage
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#IWebBrowser#IsBrowserInitialized">
+            <summary>
+            A flag that indicates whether the WebBrowser is initialized (true) or not (false).
+            </summary>
+            <value><c>true</c> if this instance is browser initialized; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#OnFrameLoadStart(CefSharp.FrameLoadStartEventArgs)">
+            <summary>
+            Handles the <see cref="E:FrameLoadStart" /> event.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.FrameLoadStartEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#OnFrameLoadEnd(CefSharp.FrameLoadEndEventArgs)">
+            <summary>
+            Handles the <see cref="E:FrameLoadEnd" /> event.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.FrameLoadEndEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#OnConsoleMessage(CefSharp.ConsoleMessageEventArgs)">
+            <summary>
+            Handles the <see cref="E:ConsoleMessage" /> event.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.ConsoleMessageEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#OnStatusMessage(CefSharp.StatusMessageEventArgs)">
+            <summary>
+            Handles the <see cref="E:StatusMessage" /> event.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.StatusMessageEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#OnLoadError(CefSharp.LoadErrorEventArgs)">
+            <summary>
+            Handles the <see cref="E:LoadError" /> event.
+            </summary>
+            <param name="args">The <see cref="T:CefSharp.LoadErrorEventArgs"/> instance containing the event data.</param>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#HasParent">
+            <summary>
+            Gets or sets a value indicating whether this instance has parent.
+            </summary>
+            <value><c>true</c> if this instance has parent; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.ChromiumWebBrowser.CefSharp#Internals#IWebBrowserInternal#BrowserAdapter">
+            <summary>
+            Gets the browser adapter.
+            </summary>
+            <value>The browser adapter.</value>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.InternalIsBrowserInitialized">
+            <summary>
+            Check is browser is initialized
+            </summary>
+            <returns>true if browser is initialized</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.ThrowExceptionIfBrowserNotInitialized">
+            <summary>
+            Throw exception if browser not initialized.
+            </summary>
+            <exception cref="T:System.Exception">Thrown when an exception error condition occurs.</exception>
+        </member>
+        <member name="M:CefSharp.OffScreen.ChromiumWebBrowser.ThrowExceptionIfDisposed">
+            <summary>
+            Throw exception if disposed.
+            </summary>
+            <exception cref="T:System.ObjectDisposedException">Thrown when a supplied object has been disposed.</exception>
+        </member>
+        <member name="T:CefSharp.OffScreen.DefaultRenderHandler">
+            <summary>
+            Default implementation of <see cref="T:CefSharp.OffScreen.IRenderHandler"/>, this class handles Offscreen Rendering (OSR).
+            Upstream documentation at http://magpcss.org/ceforum/apidocs3/projects/(default)/CefRenderHandler.html
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.DefaultRenderHandler.BitmapLock">
+            <summary>
+            Need a lock because the caller may be asking for the bitmap
+            while Chromium async rendering has returned on another thread.
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.DefaultRenderHandler.PopupOpen">
+            <summary>
+            Gets or sets a value indicating whether the popup is open.
+            </summary>
+            <value>
+            <c>true</c> if popup is opened; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:CefSharp.OffScreen.DefaultRenderHandler.BitmapBuffer">
+            <summary>
+            Contains the last bitmap buffer. Direct access
+            to the underlying buffer - there is no locking when trying
+            to access directly, use <see cref="P:CefSharp.OffScreen.BitmapBuffer.BitmapLock" /> where appropriate.
+            </summary>
+            <value>The bitmap.</value>
+        </member>
+        <member name="P:CefSharp.OffScreen.DefaultRenderHandler.PopupBuffer">
+            <summary>
+            The popup Bitmap.
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.DefaultRenderHandler.PopupSize">
+            <summary>
+            Gets the size of the popup.
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.DefaultRenderHandler.PopupPosition">
+            <summary>
+            Gets the popup position.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.#ctor(CefSharp.OffScreen.ChromiumWebBrowser)">
+            <summary>
+            Create a new instance of DefaultRenderHadler
+            </summary>
+            <param name="browser">reference to the ChromiumWebBrowser</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.Dispose">
+            <summary>
+            Dispose of this instance.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.GetScreenInfo">
+            <summary>
+            Called to allow the client to return a ScreenInfo object with appropriate values.
+            If null is returned then the rectangle from GetViewRect will be used.
+            If the rectangle is still empty or invalid popups may not be drawn correctly. 
+            </summary>
+            <returns>Return null if no screenInfo structure is provided.</returns>	
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.GetViewRect">
+            <summary>
+            Called to retrieve the view rectangle which is relative to screen coordinates.
+            This method must always provide a non-empty rectangle.
+            </summary>
+            <returns>Return a ViewRect strict containing the rectangle.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.GetScreenPoint(System.Int32,System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+            Called to retrieve the translation from view coordinates to actual screen coordinates. 
+            </summary>
+            <param name="viewX">x</param>
+            <param name="viewY">y</param>
+            <param name="screenX">screen x</param>
+            <param name="screenY">screen y</param>
+            <returns>Return true if the screen coordinates were provided.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnAcceleratedPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr)">
+            <summary>
+            Called when an element has been rendered to the shared texture handle.
+            This method is only called when <see cref="P:CefSharp.IWindowInfo.SharedTextureEnabled"/> is set to true
+            </summary>
+            <param name="type">indicates whether the element is the view or the popup widget.</param>
+            <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
+            <param name="sharedHandle">is the handle for a D3D11 Texture2D that can be accessed via ID3D11Device using the OpenSharedResource method.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr,System.Int32,System.Int32)">
+            <summary>
+            Called when an element should be painted. Pixel values passed to this method are scaled relative to view coordinates based on the
+            value of <see cref="P:CefSharp.Structs.ScreenInfo.DeviceScaleFactor"/> returned from <see cref="M:CefSharp.OffScreen.DefaultRenderHandler.GetScreenInfo"/>.
+            This method is only called when <see cref="P:CefSharp.IWindowInfo.SharedTextureEnabled"/> is set to false.
+            Called on the CEF UI Thread
+            </summary>
+            <param name="type">indicates whether the element is the view or the popup widget.</param>
+            <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
+            <param name="buffer">The bitmap will be will be  width * height *4 bytes in size and represents a BGRA image with an upper-left origin</param>
+            <param name="width">width</param>
+            <param name="height">height</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnCursorChange(System.IntPtr,CefSharp.Enums.CursorType,CefSharp.Structs.CursorInfo)">
+            <summary>
+            Called when the browser's cursor has changed.
+            </summary>
+            <param name="cursor">If type is Custom then customCursorInfo will be populated with the custom cursor information</param>
+            <param name="type">cursor type</param>
+            <param name="customCursorInfo">custom cursor Information</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.StartDragging(CefSharp.IDragData,CefSharp.Enums.DragOperationsMask,System.Int32,System.Int32)">
+            <summary>
+            Called when the user starts dragging content in the web view. Contextual information about the dragged content is
+            supplied by dragData. OS APIs that run a system message loop may be used within the StartDragging call.
+            Don't call any of the IBrowserHost.DragSource*Ended* methods after returning false.
+            Return true to handle the drag operation. Call <see cref="M:CefSharp.IBrowserHost.DragSourceEndedAt(System.Int32,System.Int32,CefSharp.Enums.DragOperationsMask)"/> and <see cref="M:CefSharp.IBrowserHost.DragSourceSystemDragEnded"/> either synchronously or asynchronously to inform
+            the web view that the drag operation has ended. 
+            </summary>
+            <param name="dragData">drag data</param>
+            <param name="mask">operation mask</param>
+            <param name="x">combined x and y provide the drag start location in screen coordinates</param>
+            <param name="y">combined x and y provide the drag start location in screen coordinates</param>
+            <returns>Return false to abort the drag operation.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.UpdateDragCursor(CefSharp.Enums.DragOperationsMask)">
+            <summary>
+            Called when the web view wants to update the mouse cursor during a drag &amp; drop operation.
+            </summary>
+            <param name="operation">describes the allowed operation (none, move, copy, link). </param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnPopupShow(System.Boolean)">
+            <summary>
+            Called when the browser wants to show or hide the popup widget.  
+            </summary>
+            <param name="show">The popup should be shown if show is true and hidden if show is false.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnPopupSize(CefSharp.Structs.Rect)">
+            <summary>
+            Called when the browser wants to move or resize the popup widget. 
+            </summary>
+            <param name="rect">contains the new location and size in view coordinates. </param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnImeCompositionRangeChanged(CefSharp.Structs.Range,CefSharp.Structs.Rect[])">
+            <summary>
+            Called when the IME composition range has changed.
+            </summary>
+            <param name="selectedRange">is the range of characters that have been selected</param>
+            <param name="characterBounds">is the bounds of each character in view coordinates.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.DefaultRenderHandler.OnVirtualKeyboardRequested(CefSharp.IBrowser,CefSharp.Enums.TextInputMode)">
+            <summary>
+            Called when an on-screen keyboard should be shown or hidden for the specified browser. 
+            </summary>
+            <param name="browser">the browser</param>
+            <param name="inputMode">specifies what kind of keyboard should be opened. If <see cref="F:CefSharp.Enums.TextInputMode.None"/>, any existing keyboard for this browser should be hidden.</param>
+        </member>
+        <member name="T:CefSharp.OffScreen.IRenderHandler">
+            <summary>
+            Implement this interface to handle Offscreen Rendering (OSR).
+            Upstream documentation at http://magpcss.org/ceforum/apidocs3/projects/(default)/CefRenderHandler.html
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.GetScreenInfo">
+            <summary>
+            Called to allow the client to return a ScreenInfo object with appropriate values.
+            If null is returned then the rectangle from GetViewRect will be used.
+            If the rectangle is still empty or invalid popups may not be drawn correctly. 
+            </summary>
+            <returns>Return null if no screenInfo structure is provided.</returns>	
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.GetViewRect">
+            <summary>
+            Called to retrieve the view rectangle which is relative to screen coordinates.
+            This method must always provide a non-empty rectangle.
+            </summary>
+            <returns>Return a ViewRect strict containing the rectangle.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.GetScreenPoint(System.Int32,System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+            Called to retrieve the translation from view coordinates to actual screen coordinates. 
+            </summary>
+            <param name="viewX">x</param>
+            <param name="viewY">y</param>
+            <param name="screenX">screen x</param>
+            <param name="screenY">screen y</param>
+            <returns>Return true if the screen coordinates were provided.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnAcceleratedPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr)">
+            <summary>
+            Called when an element has been rendered to the shared texture handle.
+            This method is only called when <see cref="P:CefSharp.IWindowInfo.SharedTextureEnabled"/> is set to true
+            </summary>
+            <param name="type">indicates whether the element is the view or the popup widget.</param>
+            <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
+            <param name="sharedHandle">is the handle for a D3D11 Texture2D that can be accessed via ID3D11Device using the OpenSharedResource method.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnPaint(CefSharp.PaintElementType,CefSharp.Structs.Rect,System.IntPtr,System.Int32,System.Int32)">
+            <summary>
+            Called when an element should be painted. Pixel values passed to this method are scaled relative to view coordinates based on the
+            value of <see cref="P:CefSharp.Structs.ScreenInfo.DeviceScaleFactor"/> returned from <see cref="M:CefSharp.OffScreen.IRenderHandler.GetScreenInfo"/>.
+            This method is only called when <see cref="P:CefSharp.IWindowInfo.SharedTextureEnabled"/> is set to false.
+            Called on the CEF UI Thread
+            </summary>
+            <param name="type">indicates whether the element is the view or the popup widget.</param>
+            <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
+            <param name="buffer">The bitmap will be will be  width * height *4 bytes in size and represents a BGRA image with an upper-left origin</param>
+            <param name="width">width</param>
+            <param name="height">height</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnCursorChange(System.IntPtr,CefSharp.Enums.CursorType,CefSharp.Structs.CursorInfo)">
+            <summary>
+            Called when the browser's cursor has changed.
+            </summary>
+            <param name="cursor">If type is Custom then customCursorInfo will be populated with the custom cursor information</param>
+            <param name="type">cursor type</param>
+            <param name="customCursorInfo">custom cursor Information</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.StartDragging(CefSharp.IDragData,CefSharp.Enums.DragOperationsMask,System.Int32,System.Int32)">
+            <summary>
+            Called when the user starts dragging content in the web view. Contextual information about the dragged content is
+            supplied by dragData. OS APIs that run a system message loop may be used within the StartDragging call.
+            Don't call any of the IBrowserHost.DragSource*Ended* methods after returning false.
+            Return true to handle the drag operation. Call <see cref="M:CefSharp.IBrowserHost.DragSourceEndedAt(System.Int32,System.Int32,CefSharp.Enums.DragOperationsMask)"/> and <see cref="M:CefSharp.IBrowserHost.DragSourceSystemDragEnded"/> either synchronously or asynchronously to inform
+            the web view that the drag operation has ended. 
+            </summary>
+            <param name="dragData">drag data</param>
+            <param name="mask">operation mask</param>
+            <param name="x">combined x and y provide the drag start location in screen coordinates</param>
+            <param name="y">combined x and y provide the drag start location in screen coordinates</param>
+            <returns>Return false to abort the drag operation.</returns>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.UpdateDragCursor(CefSharp.Enums.DragOperationsMask)">
+            <summary>
+            Called when the web view wants to update the mouse cursor during a drag &amp; drop operation.
+            </summary>
+            <param name="operation">describes the allowed operation (none, move, copy, link). </param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnPopupShow(System.Boolean)">
+            <summary>
+            Called when the browser wants to show or hide the popup widget.  
+            </summary>
+            <param name="show">The popup should be shown if show is true and hidden if show is false.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnPopupSize(CefSharp.Structs.Rect)">
+            <summary>
+            Called when the browser wants to move or resize the popup widget. 
+            </summary>
+            <param name="rect">contains the new location and size in view coordinates. </param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnImeCompositionRangeChanged(CefSharp.Structs.Range,CefSharp.Structs.Rect[])">
+            <summary>
+            Called when the IME composition range has changed.
+            </summary>
+            <param name="selectedRange">is the range of characters that have been selected</param>
+            <param name="characterBounds">is the bounds of each character in view coordinates.</param>
+        </member>
+        <member name="M:CefSharp.OffScreen.IRenderHandler.OnVirtualKeyboardRequested(CefSharp.IBrowser,CefSharp.Enums.TextInputMode)">
+            <summary>
+            Called when an on-screen keyboard should be shown or hidden for the specified browser. 
+            </summary>
+            <param name="browser">the browser</param>
+            <param name="inputMode">specifies what kind of keyboard should be opened. If <see cref="F:CefSharp.Enums.TextInputMode.None"/>, any existing keyboard for this browser should be hidden.</param>
+        </member>
+        <member name="T:CefSharp.OffScreen.OnPaintEventArgs">
+            <summary>
+            Event arguments to the OnPaint event handler.
+            Pixel values are scaled relative to view coordinates based on the value of ScreenInfo.DeviceScaleFactor
+            returned from <see cref="M:CefSharp.OffScreen.IRenderHandler.GetScreenInfo"/>. 
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.OnPaintEventArgs.Handled">
+            <summary>
+            Gets or sets a value indicating whether the event is handled.
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.OnPaintEventArgs.IsPopup">
+            <summary>
+            Indicates whether the element is the view or the popup widge
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.OnPaintEventArgs.Width">
+            <summary>
+            Width
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.OnPaintEventArgs.Height">
+            <summary>
+            Height
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.OnPaintEventArgs.BufferHandle">
+            <summary>
+            contains the pixel data for the whole image. Will be width * height * 4 bytes in size and
+            represents a BGRA image with an upper-left origin
+            </summary>
+        </member>
+        <member name="P:CefSharp.OffScreen.OnPaintEventArgs.DirtyRect">
+            <summary>
+            Contains a rectangle in pixel coordinates that needs to be repainted.
+            </summary>
+        </member>
+        <member name="M:CefSharp.OffScreen.OnPaintEventArgs.#ctor(System.Boolean,CefSharp.Structs.Rect,System.IntPtr,System.Int32,System.Int32)">
+            <summary>
+            Creates a new OnPaint event arg
+            </summary>
+            <param name="isPopup">is popup</param>
+            <param name="dirtyRect">dirty rect if enabled</param>
+            <param name="bufferHandle">buffer handle (back buffer)</param>
+            <param name="width">width</param>
+            <param name="height">height</param>
+        </member>
+        <member name="T:CefSharp.OffScreen.PopupBlending">
+            <summary>
+            Represents the popup blending in the main bitmap.
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.PopupBlending.Blend">
+            <summary>
+            The main bitmap and popup bitmap will be merged together
+            (Popup bitmap overlayed on top of the main bitmap).
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.PopupBlending.Main">
+            <summary>
+            Retrieve the main bitmap
+            </summary>
+        </member>
+        <member name="F:CefSharp.OffScreen.PopupBlending.Popup">
+            <summary>
+            Retrieve the popup bitmap
+            </summary>
+        </member>
+    </members>
+</doc>
