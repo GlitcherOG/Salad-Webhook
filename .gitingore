@@ -1,2 +1,4 @@
 bin/
 obj/
+packages/cef.redist.x86.88.2.9
+packages/cef.redist.x64.88.2.9
