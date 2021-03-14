@@ -196,10 +196,12 @@ namespace WindowsFormsApp1
                         OldBalance = Balance;
                         if (temp > 0)
                         {
-                            tempbal = " ($+" + temp.ToString() + ")";
+                            embed.Color = Color.Green;
+                            tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
                         }
                         else
                         {
+                            embed.Color = Color.Red;
                             tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
                         }
                     }
