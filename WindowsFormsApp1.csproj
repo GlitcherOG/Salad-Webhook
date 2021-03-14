@@ -104,11 +104,17 @@
       <DependentUpon>Settings.cs</DependentUpon>
     </Compile>
     <Compile Include="SettingsSaveLoad.cs" />
-    <Compile Include="WebPage.cs">
+    <Compile Include="StorePage.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="WebPage.Designer.cs">
-      <DependentUpon>WebPage.cs</DependentUpon>
+    <Compile Include="StorePage.Designer.cs">
+      <DependentUpon>StorePage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LoginLogout.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LoginLogout.Designer.cs">
+      <DependentUpon>LoginLogout.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -125,8 +131,11 @@
     <EmbeddedResource Include="Settings.resx">
       <DependentUpon>Settings.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="WebPage.resx">
-      <DependentUpon>WebPage.cs</DependentUpon>
+    <EmbeddedResource Include="LoginLogout.resx">
+      <DependentUpon>LoginLogout.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StorePage.resx">
+      <DependentUpon>StorePage.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

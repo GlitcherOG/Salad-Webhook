@@ -12,7 +12,7 @@ namespace WindowsFormsApp1
         private ToolStripMenuItem LoginAndOut;
         private ToolStripMenuItem Settings;
         private ToolStripMenuItem Exit;
-        public static WebPage loginform;
+        public static LoginLogout loginform;
         public static Settings settings;
 
         public NoficationIcon()
@@ -20,6 +20,18 @@ namespace WindowsFormsApp1
             Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
             InitializeComponent();
             TrayIcon.Visible = true;
+        }
+
+        public void UpdateTooltip()
+        {
+            if (Program.username != "")
+            {
+                this.LoginAndOut.Text = "Logout";
+            }
+            else
+            {
+                this.LoginAndOut.Text = "Login";
+            }
         }
 
         private void InitializeComponent()
@@ -45,9 +57,16 @@ namespace WindowsFormsApp1
             this.Settings.Click += new EventHandler(this.Settings_Click);
 
             LoginAndOut = new ToolStripMenuItem();
-            this.LoginAndOut.Name = "Salad Webpage";
+            this.LoginAndOut.Name = "Login/Logout";
             this.LoginAndOut.Size = new Size(152, 22);
-            this.LoginAndOut.Text = "Salad Webpage";
+            if (Program.username != "")
+            {
+                this.LoginAndOut.Text = "Logout";
+            }
+            else
+            {
+                this.LoginAndOut.Text = "Login";
+            }
             this.LoginAndOut.Click += new EventHandler(this.Login_Click);
 
             // 
@@ -82,8 +101,15 @@ namespace WindowsFormsApp1
 
         private void Login_Click(object sender, EventArgs e)
         {
-            loginform = new WebPage();
-            loginform.Show();
+            if (Program.username == "")
+            {
+                loginform = new LoginLogout();
+                loginform.Show();
+            }
+            else
+            {
+                Program.LoadEarnings();
+            }
         }
     }
 

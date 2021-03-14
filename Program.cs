@@ -23,14 +23,19 @@ namespace WindowsFormsApp1
         //https://app-api.salad.io/api/v1/profile/referral-code
         //https://app-api.salad.io/api/v1/profile/selected-reward
         //https://app-api.salad.io/api/v1/profile/referrals
+        //https://app-api.salad.io/api/v2/storefront
+        //https://app-api.salad.io/api/v1/rewards/
+        //https://app-api.salad.io/login
+        //https://app-api.salad.io/logout
 
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser1;
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser2;
+        static NoficationIcon Icon;
         public static SettingsSaveLoad Saving = new SettingsSaveLoad();
-        public static int waittime = 1;
+        public static int waittime = 15;
         public static bool postIfChange = true;
         public static string Webhook = "";
-        static string username;
+        public static string username = "";
         static string Balance;
         static string OldBalance = "0";
         static string lifetimeBalance;
@@ -54,13 +59,14 @@ namespace WindowsFormsApp1
             else
             {
                 Saving = new SettingsSaveLoad();
-                WebPage loginform = new WebPage();
+                LoginLogout loginform = new LoginLogout();
                 loginform.Show();
                 Settings Wsettings = new Settings();
                 Wsettings.Show();
             }
+            Icon = new NoficationIcon();
             //Application.Run(new WebPage());
-            Application.Run(new NoficationIcon());
+            Application.Run(Icon);
         }
         public static void LoadEarnings()
         {
@@ -98,7 +104,7 @@ namespace WindowsFormsApp1
         private static async Task LoadWebPage(string uri)
         {
             chromiumWebBrowser1.Load(uri);
-            await Task.Delay(3000);
+            await Task.Delay(2000);
         }
 
         public static List<JsonDetails> LoadJson()
@@ -138,11 +144,12 @@ namespace WindowsFormsApp1
                         ReferalCode = temp2[i].Line2;
                     }
                 }
+                Icon.UpdateTooltip();
                 await CheckData();
             }
             else
             {
-                MessageBox.Show("Please Login on the Salad Webpage.", "Error");
+                Icon.UpdateTooltip();
             }
         }
 
@@ -211,7 +218,7 @@ namespace WindowsFormsApp1
                 }
                 else
                 {
-                    MessageBox.Show("Please Check Settings and paste in a Discord Webhook", "Error");
+                    MessageBox.Show("Please Check Settings and Paste in a Discord Webhook", "Error");
                 }
             }
         }
