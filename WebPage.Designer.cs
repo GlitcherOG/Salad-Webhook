@@ -38,14 +38,14 @@
             this.WebBrowserPage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.WebBrowserPage.Location = new System.Drawing.Point(0, 0);
             this.WebBrowserPage.Name = "WebBrowserPage";
-            this.WebBrowserPage.Size = new System.Drawing.Size(800, 450);
+            this.WebBrowserPage.Size = new System.Drawing.Size(1308, 709);
             this.WebBrowserPage.TabIndex = 0;
             // 
             // WebPage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1308, 709);
             this.Controls.Add(this.WebBrowserPage);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "WebPage";
