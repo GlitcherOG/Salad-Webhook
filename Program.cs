@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SaladWebhook
+namespace WindowsFormsApp1
 {
     static class Program
     {
@@ -35,22 +35,16 @@ namespace SaladWebhook
         static string lifetimeBalance;
         static string lifetimeXP;
         static string ReferalCode;
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MyApplicationContext());
-        }
-
-
-        public static void LoadEarnings()
-        {
             Saving = SettingsSaveLoad.Load();
-            if (Saving.webhook != "" && Saving.webhook != null)
+            var settings = new CefSettings();
+            settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SaladWebHook\\CefSharp\\Cache");
+            Cef.Initialize(settings);
+            if (Saving != null)
             {
                 waittime = (int)Saving.waitTimeMin;
                 postIfChange = Saving.onlyIfNewPost;
@@ -58,14 +52,17 @@ namespace SaladWebhook
             }
             else
             {
-                Form1 loginform = new Form1();
+                Saving = new SettingsSaveLoad();
+                WebPage loginform = new WebPage();
                 loginform.Show();
                 Settings Wsettings = new Settings();
                 Wsettings.Show();
             }
-            var settings = new CefSettings();
-            settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SaladWebHook\\CefSharp\\Cache");
-            Cef.Initialize(settings);
+            //Application.Run(new WebPage());
+            Application.Run(new NoficationIcon());
+        }
+        public static void LoadEarnings()
+        {
             chromiumWebBrowser1 = new ChromiumWebBrowser();
             chromiumWebBrowser2 = new ChromiumWebBrowser();
             Task.Run(() => ProfileData());
@@ -112,9 +109,7 @@ namespace SaladWebhook
             }
             string temp = task.Result.TrimStart("<html><head></head><body><pre style =\"word-wrap: break-word; white-space: pre-wrap;\">".ToCharArray());
             temp = temp.TrimEnd("}</pre></body></html>".ToCharArray());
-            dynamic profile = temp;
             List<JsonDetails> temp2 = new List<JsonDetails>();
-            //Need a custom Strip Program
             temp2 = StripJson(temp.Split(','));
             return temp2;
         }
@@ -256,4 +251,3 @@ namespace SaladWebhook
         }
     }
 }
-

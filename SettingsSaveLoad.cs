@@ -1,13 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Xml;
-using System.Collections.Generic;
-using System.Xml.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace SaladWebhook
+namespace WindowsFormsApp1
 {
-    [System.Serializable]
+    [Serializable]
     public class SettingsSaveLoad
     {
         public float waitTimeMin = 0;

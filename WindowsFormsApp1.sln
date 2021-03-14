@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaladWebhook", "SaladWebhook.csproj", "{1001F805-536C-4E15-BD79-DCC7E13D9F5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApp1", "WindowsFormsApp1.csproj", "{5C66F681-EA27-458C-9A75-94195263D42F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1001F805-536C-4E15-BD79-DCC7E13D9F5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C66F681-EA27-458C-9A75-94195263D42F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C66F681-EA27-458C-9A75-94195263D42F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C66F681-EA27-458C-9A75-94195263D42F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C66F681-EA27-458C-9A75-94195263D42F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {855FE624-9F00-4A36-8A59-A389C62E73D6}
+		SolutionGuid = {A523243A-2562-473F-A92F-D6D017AC7515}
 	EndGlobalSection
 EndGlobal

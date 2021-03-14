@@ -2,9 +2,9 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SaladWebhook
+namespace WindowsFormsApp1
 {
-    class MyApplicationContext : ApplicationContext
+    class NoficationIcon : ApplicationContext
     {
         //Component declarations
         private NotifyIcon TrayIcon;
@@ -12,15 +12,14 @@ namespace SaladWebhook
         private ToolStripMenuItem LoginAndOut;
         private ToolStripMenuItem Settings;
         private ToolStripMenuItem Exit;
-        public static Form1 loginform;
+        public static WebPage loginform;
         public static Settings settings;
 
-        public MyApplicationContext()
+        public NoficationIcon()
         {
             Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
             InitializeComponent();
             TrayIcon.Visible = true;
-            AutoClosingMessageBox.Show("Webhook has been started.", "Started", 5000);
         }
 
         private void InitializeComponent()
@@ -28,21 +27,9 @@ namespace SaladWebhook
             Program.LoadEarnings();
             TrayIcon = new NotifyIcon();
 
-            //TrayIcon.BalloonTipIcon = ToolTipIcon.Info;
-            //TrayIcon.BalloonTipText =
-            //  "I noticed that you double-clicked me! What can I do for you?";
-            //TrayIcon.BalloonTipTitle = "You called Master?";
             TrayIcon.Text = "Salad Webhook";
 
-
-            //The icon is added to the project resources.
-            //Here, I assume that the name of the file is 'TrayIcon.ico'
             TrayIcon.Icon = Properties.Resources.Icon1;
-
-            ////Optional - handle doubleclicks on the icon:
-            //TrayIcon.DoubleClick += TrayIcon_DoubleClick;
-
-            //Optional - Add a context menu to the TrayIcon:
             TrayIconContextMenu = new ContextMenuStrip();
             TrayIconContextMenu.SuspendLayout();
 
@@ -83,7 +70,7 @@ namespace SaladWebhook
 
         private void Exit_Click(object sender, EventArgs e)
         {
-            CefSharp.Cef.Shutdown();
+            //CefSharp.Cef.Shutdown();
             Application.Exit();
         }
 
@@ -95,7 +82,7 @@ namespace SaladWebhook
 
         private void Login_Click(object sender, EventArgs e)
         {
-            loginform = new Form1();
+            loginform = new WebPage();
             loginform.Show();
         }
     }
