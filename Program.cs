@@ -32,6 +32,7 @@ namespace WindowsFormsApp1
         public static string Webhook = "";
         static string username;
         static string Balance;
+        static string OldBalance = "0";
         static string lifetimeBalance;
         static string lifetimeXP;
         static string ReferalCode;
@@ -159,6 +160,10 @@ namespace WindowsFormsApp1
                         test = true;
                     }
                     Balance = temp2[i].Line2.Substring(0, temp2[i].Line2.IndexOf('.') + 4);
+                    if (OldBalance == "0")
+                    {
+                        OldBalance = Balance;
+                    }
                 }
                 if (temp2[i].Line1.Contains("lifetimebalance"))
                 {
@@ -184,9 +189,23 @@ namespace WindowsFormsApp1
                     {
                         Title = username,
                     };
-                    embed.Description = "Current Balance: $" + Balance + Environment.NewLine + "Lifetime Earnings: $" + lifetimeBalance + Environment.NewLine + "Livetime XP: " + lifetimeXP;
+                    string tempbal = "";
+                    if (OldBalance != Balance)
+                    {
+                        float temp = float.Parse(Balance) - float.Parse(OldBalance);
+                        OldBalance = Balance;
+                        if (temp > 0)
+                        {
+                            tempbal = " ($+" + temp.ToString() + ")";
+                        }
+                        else
+                        {
+                            tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                        }
+                    }
+                    embed.Description = "Current Balance: $" + Balance + tempbal + Environment.NewLine + "Lifetime Earnings: $" + lifetimeBalance + Environment.NewLine + "Livetime XP: " + lifetimeXP;
                     embed.Footer = new EmbedFooterBuilder { Text = "Referal Code: " + ReferalCode };
-                    await client.SendMessageAsync(text: "", embeds: new[] { embed.Build() });
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
                 else
                 {
