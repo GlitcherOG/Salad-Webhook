@@ -10,12 +10,14 @@ namespace WindowsFormsApp1
         public float waitTimeMin = 0;
         public string webhook = "";
         public bool onlyIfNewPost = false;
+        public bool postIfStoreChange = false;
 
         public void Save()
         {
             waitTimeMin = (float)Program.waittime;
             webhook = Program.Webhook;
             onlyIfNewPost = Program.postIfChange;
+            postIfStoreChange = Program.postIfStoreChange;
             BinaryFormatter formatter = new BinaryFormatter();
             string paths = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SaladWebHook\\config.cfg");
             var stream = new FileStream(paths, FileMode.Create);

@@ -14,6 +14,7 @@ namespace WindowsFormsApp1
     static class Program
     {
         //Web Adresses
+        //https://github.com/ravibpatel/AutoUpdater.NET
         //https://app-api.salad.io/api/v1/profile/xp
         //https://app-api.salad.io/api/v2/reports/30-day-earning-history
         //https://app-api.salad.io/api/v1/profile/
@@ -27,13 +28,18 @@ namespace WindowsFormsApp1
         //https://app-api.salad.io/api/v1/rewards/
         //https://app-api.salad.io/login
         //https://app-api.salad.io/logout
+        //Xp Works in a ratio of 1:3:7:13:23:38. Double current and add previous one
 
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser1;
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser2;
         static NoficationIcon Icon;
+        public static List<GameData> ProductTracking = new List<GameData>();
+        public static List<GameData> StoreProducts = new List<GameData>();
         public static SettingsSaveLoad Saving = new SettingsSaveLoad();
+        static ProductDataSaveLoad ProductDataSaving = new ProductDataSaveLoad();
         public static int waittime = 15;
         public static bool postIfChange = true;
+        public static bool postIfStoreChange = false;
         public static string Webhook = "";
         public static string username = "";
         static string Balance;
@@ -41,20 +47,29 @@ namespace WindowsFormsApp1
         static string lifetimeBalance;
         static string lifetimeXP;
         static string ReferalCode;
+
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Saving = SettingsSaveLoad.Load();
             var settings = new CefSettings();
             settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SaladWebHook\\CefSharp\\Cache");
             Cef.Initialize(settings);
+            LoadSavedData();
+            Icon = new NoficationIcon();
+            Application.Run(Icon);
+        }
+        public static void LoadSavedData()
+        {
+            Saving = SettingsSaveLoad.Load();
+            ProductDataSaving = ProductDataSaveLoad.Load();
             if (Saving != null)
             {
                 waittime = (int)Saving.waitTimeMin;
                 postIfChange = Saving.onlyIfNewPost;
                 Webhook = Saving.webhook;
+                postIfStoreChange = Saving.postIfStoreChange;
             }
             else
             {
@@ -64,9 +79,11 @@ namespace WindowsFormsApp1
                 Settings Wsettings = new Settings();
                 Wsettings.Show();
             }
-            Icon = new NoficationIcon();
-            //Application.Run(new WebPage());
-            Application.Run(Icon);
+            if(ProductDataSaving != null)
+            {
+                ProductTracking = ProductDataSaving.TrackedProducts;
+                StoreProducts = ProductDataSaving.AllProducts;
+            }
         }
         public static void LoadEarnings()
         {
@@ -87,8 +104,73 @@ namespace WindowsFormsApp1
                 }
                 else
                 {
-                    await Refresh();
-                    await CheckData().ConfigureAwait(false);
+                    //await Refresh();
+                    await CheckData();
+                }
+                //await Task.Delay(10000);
+                await CheckPrices();
+            }
+        }
+
+        private static async Task AddProductA(string Address)
+        {
+            bool Test = false;
+            for (int i = 0; i < ProductTracking.Count; i++)
+            {
+                if (Address == ProductTracking[i].id)
+                {
+                    Test = true;
+                    ProductTracking.RemoveAt(i);
+                }
+            }
+            if (!Test)
+            {
+                string uri = "https://app-api.salad.io/api/v1/rewards/";
+                chromiumWebBrowser2.Load(uri + Address);
+                await Task.Delay(3000);
+                ProductTracking.Add(LoadGameData());
+                ProductDataSaving.Save();
+            }
+        }
+
+            public static void AddProduct(string Address)
+            {
+                Task.Run(() => AddProductA(Address));
+            }
+
+        private static async Task CheckPrices()
+        {
+            for (int i = 0; i < ProductTracking.Count; i++)
+            {
+                string uri = "https://app-api.salad.io/api/v1/rewards/";
+                chromiumWebBrowser2.Load(uri + ProductTracking[i].id);
+                await Task.Delay(3000);
+                GameData data = LoadGameData();
+                if(ProductTracking[i].price!=data.price)
+                {
+                    var client = new DiscordWebhookClient(Webhook);
+
+                    var embed = new EmbedBuilder
+                    {
+                        Title = data.name,
+                    };
+                    float temp = float.Parse(ProductTracking[i].price) - float.Parse(data.price);
+                    string tempbal;
+                    if (temp > 0)
+                    {
+                        embed.Color = Color.Green;
+                        tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                    }
+                    else
+                    {
+                        embed.Color = Color.Red;
+                        tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                    }
+                    embed.Description = data.description;
+                    embed.ImageUrl = data.image;
+                    embed.AddField("Price", data.price + " " + tempbal);
+                    embed.Timestamp = DateTimeOffset.Now;
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO Shop", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
             }
         }
@@ -114,8 +196,9 @@ namespace WindowsFormsApp1
             {
                 task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
             }
+            //string temp = "{\"category\":\"gamingGiftcard\",\"checkoutTerms\":[\"US Blizzard Account\"],\"coverImage\":\" / api / v1 / reward - images / 9f04eca5 - e29a - 4890 - 85b3 - 4626096e169b\",\"description\":\"Get the latest in Blizzard items and games through Salad. USA Blizzard account only.\",\"developerName\":\"\",\"headline\":\"\",\"id\":\"0a600b4e - 42d5 - 4720 - a575 - 12b71c532586\",\"image\":\" / api / v1 / reward - images / 57542b2e - 3818 - 4aa9 - 9430 - 851e8dd8a02f\",\"images\":[],\"name\":\"Blizzard Gift Card - $20 \",\"platform\":\"unknown\",\"price\":21.0,\"publisherName\":\"\",\"tags\":[\"Gaming Gift Cards\"],\"videos\":[]}";
             string temp = task.Result.TrimStart("<html><head></head><body><pre style =\"word-wrap: break-word; white-space: pre-wrap;\">".ToCharArray());
-            temp = temp.TrimEnd("}</pre></body></html>".ToCharArray());
+            temp = temp.TrimEnd("</pre></body></html>".ToCharArray());
             List<JsonDetails> temp2 = new List<JsonDetails>();
             temp2 = StripJson(temp.Split(','));
             return temp2;
@@ -240,9 +323,18 @@ namespace WindowsFormsApp1
                 {
                     Dump = JsonFile[i].Split('"', ':');
                 }
+                if (i == JsonFile.Length)
+                {
+                    Dump2 = JsonFile[i].Replace("}", "");
+                    Dump = Dump2.Split('"', ':');
+                }
+                else
+                {
+                    Dump = JsonFile[i].Split('"', ':');
+                }
                 for (int a = 0; a < Dump.Length; a++)
                 {
-                    if (Dump[a] != null && Dump[a] != "" && Dump[a] != " ")
+                    if (Dump[a] != null && Dump[a] != "" && Dump[a] != " " && Dump[a] != "{" && Dump[a] != "}")
                     {
                         Dump3.Add(Dump[a]);
                     }
@@ -256,26 +348,54 @@ namespace WindowsFormsApp1
             }
             return file;
         }
-        public struct JsonDetails
-        {
-            public string Line1;
-            public string Line2;
-        }
 
-        public static bool GetLogin
+        public static GameData LoadGameData()
         {
-            get
+            List<JsonDetails> temp = LoadJson();
+            GameData data = new GameData();
+            for (int i = 0; i < temp.Count; i++)
             {
-                string temp = System.IO.File.ReadAllText(@"C:\Users\User\AppData\Local\CefSharp\Cache\Cookies");
-                if (temp.Contains("salad"))
+                if (temp[i].Line1 == "id")
                 {
-                    return true;
+                    data.id = temp[i].Line2;
                 }
-                else
+                if (temp[i].Line1 == "name")
                 {
-                    return false;
+                    data.name = temp[i].Line2;
+                }
+                if (temp[i].Line1 == "price")
+                {
+                    data.price = temp[i].Line2;
+                }
+                if (temp[i].Line1 == "category")
+                {
+                    data.category = temp[i].Line2;
+                }
+                if (temp[i].Line1 == "image")
+                {
+                    data.image = temp[i].Line2;
+                }
+                if (temp[i].Line1 == "description")
+                {
+                    data.description = temp[i].Line2;
                 }
             }
+            return data;
         }
     }
+}
+
+public struct GameData
+{
+    public string id;
+    public string name;
+    public string price;
+    public string description;
+    public string category;
+    public string image;
+}
+public struct JsonDetails
+{
+    public string Line1;
+    public string Line2;
 }

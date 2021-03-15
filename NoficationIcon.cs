@@ -10,9 +10,11 @@ namespace WindowsFormsApp1
         private NotifyIcon TrayIcon;
         private ContextMenuStrip TrayIconContextMenu;
         private ToolStripMenuItem LoginAndOut;
+        private ToolStripMenuItem SaladStore;
         private ToolStripMenuItem Settings;
         private ToolStripMenuItem Exit;
         public static LoginLogout loginform;
+        public static StorePage storeform;
         public static Settings settings;
 
         public NoficationIcon()
@@ -56,6 +58,12 @@ namespace WindowsFormsApp1
             this.Settings.Text = "Settings";
             this.Settings.Click += new EventHandler(this.Settings_Click);
 
+            SaladStore = new ToolStripMenuItem();
+            this.SaladStore.Name = "Salad Store";
+            this.SaladStore.Size = new Size(152, 22);
+            this.SaladStore.Text = "Salad Store";
+            this.SaladStore.Click += new EventHandler(this.Store_Click);
+
             LoginAndOut = new ToolStripMenuItem();
             this.LoginAndOut.Name = "Login/Logout";
             this.LoginAndOut.Size = new Size(152, 22);
@@ -73,7 +81,7 @@ namespace WindowsFormsApp1
             // TrayIconContextMenu
             // 
             this.TrayIconContextMenu.Items.AddRange(new ToolStripItem[] {
-            this.LoginAndOut, Settings, Exit});
+            this.LoginAndOut, SaladStore, Settings, Exit});
             this.TrayIconContextMenu.Name = "TrayIconContextMenu";
             this.TrayIconContextMenu.Size = new Size(153, 70);
 
@@ -110,6 +118,12 @@ namespace WindowsFormsApp1
             {
                 Program.LoadEarnings();
             }
+        }
+
+        private void Store_Click(object sender, EventArgs e)
+        {
+            storeform = new StorePage();
+            storeform.Show();
         }
     }
 

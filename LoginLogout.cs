@@ -6,6 +6,7 @@ namespace WindowsFormsApp1
     {
         public LoginLogout()
         {
+            this.StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             WebBrowserPage.Load("https://app-api.salad.io/login");
         }
