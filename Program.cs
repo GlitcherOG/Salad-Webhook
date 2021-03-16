@@ -264,6 +264,7 @@ namespace WindowsFormsApp1
                     embed.AddField("Description", data.description);
                     embed.Timestamp = DateTimeOffset.Now;
                     ProductTracking[i] = data;
+                    embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
             }
@@ -293,7 +294,7 @@ namespace WindowsFormsApp1
             await Task.Delay(1000);
             string temp;
             Task<string> task = chromiumWebBrowser1.GetSourceAsync();
-            while (task == null)
+            while (task == null && task.Result == "")
             {
                 task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
             }
@@ -380,6 +381,7 @@ namespace WindowsFormsApp1
                     }
                     embed.Description = "Current Balance: $" + Balance.Substring(0,5) + tempbal + Environment.NewLine + "Lifetime Earnings: $" + lifetimeBalance.Substring(0, 5) + Environment.NewLine + "Livetime XP: " + lifetimeXP;
                     embed.Footer = new EmbedFooterBuilder { Text = "Referal Code: " + ReferalCode };
+                    embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
                 else

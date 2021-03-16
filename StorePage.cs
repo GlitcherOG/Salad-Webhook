@@ -51,7 +51,8 @@ namespace WindowsFormsApp1
                 toolStripButton1.Text = "Track Price";
             }
             string uri = "https://app-api.salad.io/api/v1/rewards/";
-            Program.AddProduct(uri + chromiumWebBrowser1.Address.TrimStart("https://app.salad.io/rewards/".ToCharArray()));
+            string temp = chromiumWebBrowser1.Address.Substring(29);
+            Program.AddProduct(uri + temp);
         }
 
         public void UpdateButton()
