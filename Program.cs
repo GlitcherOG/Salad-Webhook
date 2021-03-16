@@ -148,9 +148,9 @@ namespace WindowsFormsApp1
             {
                 string temp2 = await LoadWebPage(Address);
                 ProductTracking.Add(LoadGameData(temp2));
-                GameData temp = ProductTracking[0];
-                temp.price = "100";
-                ProductTracking[0] = temp;
+                //GameData temp = ProductTracking[0];
+                //temp.price = "100";
+                //ProductTracking[0] = temp;
                 NoficationIcon.storeform.UpdateButton();
                 ProductDataSaving.Save();
             }
@@ -239,7 +239,7 @@ namespace WindowsFormsApp1
             {
                 string temp2 = await LoadWebPage("https://app-api.salad.io/api/v1/rewards/" + ProductTracking[i].id);
                 GameData data = LoadGameData(temp2);
-                if(ProductTracking[i].price!=data.price)
+                if (ProductTracking[i].price != data.price)
                 {
                     var client = new DiscordWebhookClient(Webhook);
 
@@ -257,15 +257,17 @@ namespace WindowsFormsApp1
                     else
                     {
                         embed.Color = Color.Red;
-                        tempbal = " (+$" + Math.Round(temp-temp+temp, 4).ToString() + ")";
+                        tempbal = " (+$" + Math.Round(temp - temp + temp, 4).ToString() + ")";
                     }
                     embed.ImageUrl = "https://app-api.salad.io" + data.image;
                     embed.Description = "Price: $" + data.price + " " + tempbal;
-                    //embed.AddField("Description", data.description);
+                    embed.AddField("Description", data.description);
                     embed.Timestamp = DateTimeOffset.Now;
+                    ProductTracking[i] = data;
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
             }
+            ProductDataSaving.Save();
         }
 
         private static async Task Refresh()
