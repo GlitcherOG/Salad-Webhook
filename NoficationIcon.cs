@@ -67,14 +67,7 @@ namespace WindowsFormsApp1
             LoginAndOut = new ToolStripMenuItem();
             this.LoginAndOut.Name = "Login/Logout";
             this.LoginAndOut.Size = new Size(152, 22);
-            if (Program.username != "")
-            {
-                this.LoginAndOut.Text = "Logout";
-            }
-            else
-            {
-                this.LoginAndOut.Text = "Login";
-            }
+            this.LoginAndOut.Text = "Login";
             this.LoginAndOut.Click += new EventHandler(this.Login_Click);
 
             // 
@@ -109,15 +102,8 @@ namespace WindowsFormsApp1
 
         private void Login_Click(object sender, EventArgs e)
         {
-            if (Program.username == "")
-            {
                 loginform = new LoginLogout();
                 loginform.Show();
-            }
-            else
-            {
-                Program.LoadEarnings();
-            }
         }
 
         private void Store_Click(object sender, EventArgs e)

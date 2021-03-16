@@ -6,8 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Newtonsoft.Json.Linq;
 
 namespace WindowsFormsApp1
 {
@@ -28,21 +30,23 @@ namespace WindowsFormsApp1
         //https://app-api.salad.io/api/v1/rewards/
         //https://app-api.salad.io/login
         //https://app-api.salad.io/logout
-        //Xp Works in a ratio of 1:3:7:13:23:38. Double current and add previous one
+        //Xp Works in a ratio of 1:3:7:13:23:38. Add previous one and one before and add 3
 
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser1;
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser2;
         static NoficationIcon Icon;
         public static List<GameData> ProductTracking = new List<GameData>();
         public static List<GameData> StoreProducts = new List<GameData>();
+        public static List<int> FruitXp = new List<int>();
         public static SettingsSaveLoad Saving = new SettingsSaveLoad();
-        static ProductDataSaveLoad ProductDataSaving = new ProductDataSaveLoad();
+        public static ProductDataSaveLoad ProductDataSaving = new ProductDataSaveLoad();
+        static List<JsonDetails> Temp = new List<JsonDetails>();
         public static int waittime = 15;
         public static bool postIfChange = true;
         public static bool postIfStoreChange = false;
         public static string Webhook = "";
         public static string username = "";
-        static string Balance;
+        static string Balance = "0.000";
         static string OldBalance = "0";
         static string lifetimeBalance;
         static string lifetimeXP;
@@ -51,6 +55,7 @@ namespace WindowsFormsApp1
         [STAThread]
         static void Main()
         {
+            //GenerateFruit();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             var settings = new CefSettings();
@@ -60,6 +65,15 @@ namespace WindowsFormsApp1
             Icon = new NoficationIcon();
             Application.Run(Icon);
         }
+        //public static void GenerateFruit()
+        //{
+        //    FruitXp.Add(60);
+        //    FruitXp.Add((FruitXp[0] * 2) + FruitXp[0]);
+        //    for (int i = 2; i < 19; i++)
+        //    {
+        //        FruitXp.Add((FruitXp[i - 1] + FruitXp[i - 2] + ());
+        //    }
+        //}
         public static void LoadSavedData()
         {
             Saving = SettingsSaveLoad.Load();
@@ -79,10 +93,14 @@ namespace WindowsFormsApp1
                 Settings Wsettings = new Settings();
                 Wsettings.Show();
             }
-            if(ProductDataSaving != null)
+            if (ProductDataSaving != null)
             {
                 ProductTracking = ProductDataSaving.TrackedProducts;
                 StoreProducts = ProductDataSaving.AllProducts;
+            }
+            else
+            {
+                ProductDataSaving = new ProductDataSaveLoad();
             }
         }
         public static void LoadEarnings()
@@ -100,15 +118,16 @@ namespace WindowsFormsApp1
                 await Task.Delay(1000 * waittime * 60);
                 if (username == null || username == "")
                 {
-                    await ProfileData().ConfigureAwait(false);
+                    await Task.Run(() => ProfileData());
                 }
                 else
                 {
-                    //await Refresh();
+                    await Refresh();
                     await CheckData();
                 }
-                //await Task.Delay(10000);
-                await CheckPrices();
+                //await Task.Delay(30000);
+                await Task.Run(() => CheckPrices());
+                //await CheckStore();
             }
         }
 
@@ -117,35 +136,109 @@ namespace WindowsFormsApp1
             bool Test = false;
             for (int i = 0; i < ProductTracking.Count; i++)
             {
-                if (Address == ProductTracking[i].id)
+                if (Address.TrimStart("https://app-api.salad.io/api/v1/rewards/".ToCharArray()) == ProductTracking[i].id)
                 {
                     Test = true;
                     ProductTracking.RemoveAt(i);
+                    NoficationIcon.storeform.UpdateButton();
+                    ProductDataSaving.Save();
                 }
             }
             if (!Test)
             {
-                string uri = "https://app-api.salad.io/api/v1/rewards/";
-                chromiumWebBrowser2.Load(uri + Address);
-                await Task.Delay(3000);
-                ProductTracking.Add(LoadGameData());
+                string temp2 = await LoadWebPage(Address);
+                ProductTracking.Add(LoadGameData(temp2));
+                GameData temp = ProductTracking[0];
+                temp.price = "100";
+                ProductTracking[0] = temp;
+                NoficationIcon.storeform.UpdateButton();
                 ProductDataSaving.Save();
             }
         }
 
-            public static void AddProduct(string Address)
+        public static void AddProduct(string Address)
+        {
+            Task.Run(() => AddProductA(Address));
+        }
+
+        private static async Task CheckStore()
+        {
+            string uri = "https://app-api.salad.io/api/v1/rewards/";
+            chromiumWebBrowser2.Load(uri);
+            await Task.Delay(3000);
+            Task<string> task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
+            while (task == null)
             {
-                Task.Run(() => AddProductA(Address));
+                task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
             }
+            string[] Temp = task.Result.Split('[', ']');
+            List<GameData> Store = new List<GameData>();
+            for (int i = 1; i < Temp.Length - 1; i++)
+            {
+                GameData temp2 = LoadGameData(Temp[i]);
+                Store.Add(temp2);
+            }
+            string StorePriceChanges = "";
+            string StoreProductChanges = "";
+            for (int i = 0; i < Store.Count; i++)
+            {
+                bool test = false;
+                for (int a = 0; a < StoreProducts.Count; a++)
+                {
+                    if (Store[i].id == StoreProducts[a].id)
+                    {
+                        test = true;
+                        if (Store[i].price != StoreProducts[a].price)
+                        {
+                            float temp = float.Parse(Store[i].price) - float.Parse(StoreProducts[a].price);
+                            string tempbal;
+                            if (temp > 0)
+                            {
+                                tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                            }
+                            else
+                            {
+                                tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                            }
+                            StorePriceChanges += Store[i].name + ": $" + Store[i].price + " ($" + Store[i].price + ")" + Environment.NewLine;
+                        }
+                        break;
+                    }
+                }
+                if (!test)
+                {
+                    StoreProductChanges += Store[i].name + ": $" + Store[i].price + "" + Environment.NewLine;
+                }
+            }
+            var client = new DiscordWebhookClient(Webhook);
+
+            var embed = new EmbedBuilder
+            {
+                Title = "Store Changes",
+            };
+            if (StorePriceChanges != "" && StoreProductChanges != "")
+            {
+                if (StorePriceChanges != "")
+                {
+                    embed.AddField("Price Changes", StorePriceChanges);
+                }
+                if (StoreProductChanges != "")
+                {
+                    embed.AddField("Price Changes", StoreProductChanges);
+                }
+                embed.Timestamp = DateTimeOffset.Now;
+                await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO Shop", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                //StoreProducts = Store;
+                //ProductDataSaving.Save();
+            }
+        }
 
         private static async Task CheckPrices()
         {
             for (int i = 0; i < ProductTracking.Count; i++)
             {
-                string uri = "https://app-api.salad.io/api/v1/rewards/";
-                chromiumWebBrowser2.Load(uri + ProductTracking[i].id);
-                await Task.Delay(3000);
-                GameData data = LoadGameData();
+                string temp2 = await LoadWebPage("https://app-api.salad.io/api/v1/rewards/" + ProductTracking[i].id);
+                GameData data = LoadGameData(temp2);
                 if(ProductTracking[i].price!=data.price)
                 {
                     var client = new DiscordWebhookClient(Webhook);
@@ -159,76 +252,78 @@ namespace WindowsFormsApp1
                     if (temp > 0)
                     {
                         embed.Color = Color.Green;
-                        tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                        tempbal = " (-$" + Math.Round(temp, 4).ToString() + ")";
                     }
                     else
                     {
                         embed.Color = Color.Red;
-                        tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                        tempbal = " (+$" + Math.Round(temp-temp+temp, 4).ToString() + ")";
                     }
-                    embed.Description = data.description;
-                    embed.ImageUrl = data.image;
-                    embed.AddField("Price", data.price + " " + tempbal);
+                    embed.ImageUrl = "https://app-api.salad.io" + data.image;
+                    embed.Description = "Price: $" + data.price + " " + tempbal;
+                    //embed.AddField("Description", data.description);
                     embed.Timestamp = DateTimeOffset.Now;
-                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO Shop", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
             }
         }
 
         private static async Task Refresh()
         {
-            string uri;
-            uri = "https://app.salad.io/earn/summary";
+            string uri = "https://app.salad.io/earn/summary";
             chromiumWebBrowser2.Load(uri);
-            await Task.Delay(5000);
+            await Task.Delay(2000);
+            while (chromiumWebBrowser2.IsLoading)
+            {
+                await Task.Delay(100);
+            }
+            await Task.Delay(1000);
         }
 
-        private static async Task LoadWebPage(string uri)
+        private static async Task<string> LoadWebPage(string uri)
         {
             chromiumWebBrowser1.Load(uri);
-            await Task.Delay(2000);
-        }
-
-        public static List<JsonDetails> LoadJson()
-        {
-            Task<string> task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
+            await Task.Delay(1000);
+            while (chromiumWebBrowser2.IsLoading)
+            {
+                await Task.Delay(100);
+            }
+            //await Task.Delay(1000);
+            string temp;
+            Task<string> task = chromiumWebBrowser1.GetSourceAsync();
             while (task == null)
             {
                 task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
             }
-            //string temp = "{\"category\":\"gamingGiftcard\",\"checkoutTerms\":[\"US Blizzard Account\"],\"coverImage\":\" / api / v1 / reward - images / 9f04eca5 - e29a - 4890 - 85b3 - 4626096e169b\",\"description\":\"Get the latest in Blizzard items and games through Salad. USA Blizzard account only.\",\"developerName\":\"\",\"headline\":\"\",\"id\":\"0a600b4e - 42d5 - 4720 - a575 - 12b71c532586\",\"image\":\" / api / v1 / reward - images / 57542b2e - 3818 - 4aa9 - 9430 - 851e8dd8a02f\",\"images\":[],\"name\":\"Blizzard Gift Card - $20 \",\"platform\":\"unknown\",\"price\":21.0,\"publisherName\":\"\",\"tags\":[\"Gaming Gift Cards\"],\"videos\":[]}";
-            string temp = task.Result.TrimStart("<html><head></head><body><pre style =\"word-wrap: break-word; white-space: pre-wrap;\">".ToCharArray());
+            temp = task.Result.TrimStart("<html><head></head><body><pre style =\"word-wrap: break-word; white-space: pre-wrap;\">".ToCharArray());
             temp = temp.TrimEnd("</pre></body></html>".ToCharArray());
-            List<JsonDetails> temp2 = new List<JsonDetails>();
-            temp2 = StripJson(temp.Split(','));
+            return temp;
+        }
+
+        public static dynamic LoadJson(string Json = null)
+        {
+            string temp = Json;
+            dynamic temp2 = new List<JsonDetails>();
+            temp = temp.TrimStart("<html><head></head><body><pre style =\"word-wrap: break-word; white-space: pre-wrap;\">".ToCharArray());
+            temp = temp.TrimEnd("</pre></body></html>".ToCharArray());
+            temp2 = JValue.Parse(Json);
             return temp2;
         }
 
         private static async Task ProfileData()
         {
             await Refresh();
-            await LoadWebPage("https://app-api.salad.io/api/v1/profile/");
-            List<JsonDetails> temp2 = LoadJson();
-            for (int i = 0; i < temp2.Count; i++)
-            {
-                if (temp2[i].Line1.Contains("username"))
-                {
-                    username = temp2[i].Line2;
-                }
-            }
+            string temp = await LoadWebPage("https://app-api.salad.io/api/v1/profile/");
+            dynamic temp2 = LoadJson(temp);
+            username = temp2.username;
             if (username != null && username != "")
             {
-                await LoadWebPage("https://app-api.salad.io/api/v1/profile/referral-code");
-                temp2 = LoadJson();
-                for (int i = 0; i < temp2.Count; i++)
-                {
-                    if (temp2[i].Line1.Contains("code"))
-                    {
-                        ReferalCode = temp2[i].Line2;
-                    }
-                }
+                temp = await LoadWebPage("https://app-api.salad.io/api/v1/profile/referral-code");
+                temp2 = LoadJson(temp);
+                ReferalCode = temp2.code;
                 Icon.UpdateTooltip();
-                await CheckData();
+                await Task.Run(() => CheckData());
+                //await CheckData();
             }
             else
             {
@@ -238,37 +333,23 @@ namespace WindowsFormsApp1
 
         private static async Task CheckData()
         {
-            await LoadWebPage("https://app-api.salad.io/api/v1/profile/balance");
+            string temp3 = await LoadWebPage("https://app-api.salad.io/api/v1/profile/balance");
             bool test = false;
-            List<JsonDetails> temp2 = LoadJson();
-            for (int i = 0; i < temp2.Count; i++)
+            dynamic temp2 = LoadJson(temp3);
+            string temp4 = temp2.currentBalance;
+            if (Balance != temp4)
             {
-                if (temp2[i].Line1.Contains("currentbalance"))
-                {
-                    if (Balance != temp2[i].Line2.Substring(0, temp2[i].Line2.IndexOf('.') + 4))
-                    {
-                        test = true;
-                    }
-                    Balance = temp2[i].Line2.Substring(0, temp2[i].Line2.IndexOf('.') + 4);
-                    if (OldBalance == "0")
-                    {
-                        OldBalance = Balance;
-                    }
-                }
-                if (temp2[i].Line1.Contains("lifetimebalance"))
-                {
-                    lifetimeBalance = temp2[i].Line2.Substring(0, temp2[i].Line2.IndexOf('.') + 4);
-                }
+                test = true;
             }
-            await LoadWebPage("https://app-api.salad.io/api/v1/profile/xp");
-            temp2 = LoadJson();
-            for (int i = 0; i < temp2.Count; i++)
+            Balance = temp4;
+            if (OldBalance == "0")
             {
-                if (temp2[i].Line1.Contains("lifetimexp"))
-                {
-                    lifetimeXP = temp2[i].Line2;
-                }
+                OldBalance = Balance;
             }
+            lifetimeBalance = temp2.lifetimeBalance;
+            temp3 = await LoadWebPage("https://app-api.salad.io/api/v1/profile/xp");
+            temp2 = LoadJson(temp3);
+            lifetimeXP = temp2.lifetimeXp;
             if (!postIfChange || test && postIfChange)
             {
                 if (Webhook != null && Webhook != "")
@@ -295,7 +376,7 @@ namespace WindowsFormsApp1
                             tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
                         }
                     }
-                    embed.Description = "Current Balance: $" + Balance + tempbal + Environment.NewLine + "Lifetime Earnings: $" + lifetimeBalance + Environment.NewLine + "Livetime XP: " + lifetimeXP;
+                    embed.Description = "Current Balance: $" + Balance.Substring(0,5) + tempbal + Environment.NewLine + "Lifetime Earnings: $" + lifetimeBalance.Substring(0, 5) + Environment.NewLine + "Livetime XP: " + lifetimeXP;
                     embed.Footer = new EmbedFooterBuilder { Text = "Referal Code: " + ReferalCode };
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
@@ -305,86 +386,75 @@ namespace WindowsFormsApp1
                 }
             }
         }
-        public static List<JsonDetails> StripJson(string[] JsonFile)
+        public static dynamic StripJson(string JsonFile)
         {
-            List<JsonDetails> file = new List<JsonDetails>();
-            for (int i = 0; i < JsonFile.Length; i++)
-            {
-                string[] Dump;
-                string Dump2;
-                List<string> Dump3 = new List<string>();
-                JsonDetails temp = new JsonDetails();
-                if (i == 0)
-                {
-                    Dump2 = JsonFile[i].Replace("{", "");
-                    Dump = Dump2.Split('"', ':');
-                }
-                else
-                {
-                    Dump = JsonFile[i].Split('"', ':');
-                }
-                if (i == JsonFile.Length)
-                {
-                    Dump2 = JsonFile[i].Replace("}", "");
-                    Dump = Dump2.Split('"', ':');
-                }
-                else
-                {
-                    Dump = JsonFile[i].Split('"', ':');
-                }
-                for (int a = 0; a < Dump.Length; a++)
-                {
-                    if (Dump[a] != null && Dump[a] != "" && Dump[a] != " " && Dump[a] != "{" && Dump[a] != "}")
-                    {
-                        Dump3.Add(Dump[a]);
-                    }
-                }
-                if (Dump3.Count >= 2)
-                {
-                    temp.Line1 = Dump3[0].ToLower().TrimEnd(' ').TrimStart(' ');
-                    temp.Line2 = Dump3[1];
-                    file.Add(temp);
-                }
-            }
-            return file;
+            return JValue.Parse(JsonFile);
+            //List<JsonDetails> file = new List<JsonDetails>();
+            //string[] Dump;
+            //string Dump2;
+            //List<string> Dump3 = new List<string>();
+            //JsonDetails temp = new JsonDetails();
+            //Dump2 = JsonFile.Replace("{", "");
+            //Dump2 = Dump2.Replace("}", "");
+            //Dump = Dump2.Split(new string[] { ",\"" }, StringSplitOptions.None);
+            //string boo = "";
+            //for (int a = 0; a < Dump.Length; a++)
+            //{
+            //    if (Dump[a].Contains(":"))
+            //    {
+            //        if (Dump[a].Contains("[") && !Dump[a].Contains("]"))
+            //        {
+            //            boo += Dump[a];
+            //        }
+            //        else
+            //        {
+            //            Dump3.Add(Dump[a]);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        boo += Dump[a];
+            //        if (Dump[a].Contains("]"))
+            //        {
+            //            Dump3.Add(boo);
+            //            boo = "";
+            //        }
+            //    }
+            //}
+            //for (int i = 0; i < Dump3.Count; i++)
+            //{
+            //    string[] Lines = Dump3[i].Replace("\"","").Split(':');
+            //    temp.Line1 = Lines[0].ToLower();
+            //    temp.Line2 = Lines[1].Replace("\n", Environment.NewLine);
+            //    file.Add(temp);
+            //}
+            //return file;
         }
 
-        public static GameData LoadGameData()
+        public static GameData LoadGameData(string Json)
         {
-            List<JsonDetails> temp = LoadJson();
+            dynamic temp = LoadJson(Json);
+            string temp2 = temp.description;
             GameData data = new GameData();
-            for (int i = 0; i < temp.Count; i++)
-            {
-                if (temp[i].Line1 == "id")
-                {
-                    data.id = temp[i].Line2;
-                }
-                if (temp[i].Line1 == "name")
-                {
-                    data.name = temp[i].Line2;
-                }
-                if (temp[i].Line1 == "price")
-                {
-                    data.price = temp[i].Line2;
-                }
-                if (temp[i].Line1 == "category")
-                {
-                    data.category = temp[i].Line2;
-                }
-                if (temp[i].Line1 == "image")
-                {
-                    data.image = temp[i].Line2;
-                }
-                if (temp[i].Line1 == "description")
-                {
-                    data.description = temp[i].Line2;
-                }
-            }
+            data.id = temp.id;
+            data.name = temp.name;
+            data.price = temp.price;
+            data.image = temp.coverImage;
+            data.description = temp2.Replace("<div>", "");
+            data.description = data.description.Replace("<p>", "");
+            data.description = data.description.Replace("<br />", "");
+            data.description = data.description.Replace("</p>", "");
+            data.description = data.description.Replace("</p>", "");
+            data.description = data.description.Replace("<ul>", "");
+            data.description = data.description.Replace("<li>", "");
+            data.description = data.description.Replace("</li>", "");
+            data.description = data.description.Replace("</ul>", "");
+            data.description = data.description.Replace("</div>", "");
             return data;
         }
     }
 }
-
+[Serializable]
 public struct GameData
 {
     public string id;
@@ -394,6 +464,7 @@ public struct GameData
     public string category;
     public string image;
 }
+[Serializable]
 public struct JsonDetails
 {
     public string Line1;

@@ -8,8 +8,8 @@ namespace WindowsFormsApp1
     [Serializable]
     class ProductDataSaveLoad
     {
-        public List<GameData> AllProducts;
-        public List<GameData> TrackedProducts;
+        public List<GameData> AllProducts = new List<GameData>();
+        public List<GameData> TrackedProducts = new List<GameData>();
         public void Save()
         {
             TrackedProducts = Program.ProductTracking;
