@@ -272,23 +272,23 @@ namespace WindowsFormsApp1
         {
             string uri = "https://app.salad.io/earn/summary";
             chromiumWebBrowser2.Load(uri);
+            await Task.Delay(1000);
+            while (chromiumWebBrowser2.IsLoading)
+            {
+                await Task.Delay(100);
+            }
+            await Task.Delay(2000);
+        }
+
+        private static async Task<string> LoadWebPage(string uri)
+        {
+            chromiumWebBrowser1.Load(uri);
             await Task.Delay(2000);
             while (chromiumWebBrowser2.IsLoading)
             {
                 await Task.Delay(100);
             }
             await Task.Delay(1000);
-        }
-
-        private static async Task<string> LoadWebPage(string uri)
-        {
-            chromiumWebBrowser1.Load(uri);
-            await Task.Delay(1000);
-            while (chromiumWebBrowser2.IsLoading)
-            {
-                await Task.Delay(100);
-            }
-            //await Task.Delay(1000);
             string temp;
             Task<string> task = chromiumWebBrowser1.GetSourceAsync();
             while (task == null)
