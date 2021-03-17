@@ -105,7 +105,6 @@ namespace WindowsFormsApp1
             // checkBox2
             // 
             this.checkBox2.AutoSize = true;
-            this.checkBox2.Enabled = false;
             this.checkBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
             this.checkBox2.Location = new System.Drawing.Point(29, 63);
             this.checkBox2.Name = "checkBox2";

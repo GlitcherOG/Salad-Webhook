@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 namespace WindowsFormsApp1
 {
@@ -33,7 +34,6 @@ namespace WindowsFormsApp1
         //Xp Works in a ratio of 1:3:7:13:23:38. Add previous one and one before and add 3
 
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser1;
-        static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser2;
         static NoficationIcon Icon;
         public static List<GameData> ProductTracking = new List<GameData>();
         public static List<GameData> StoreProducts = new List<GameData>();
@@ -106,8 +106,7 @@ namespace WindowsFormsApp1
         public static void LoadEarnings()
         {
             chromiumWebBrowser1 = new ChromiumWebBrowser();
-            chromiumWebBrowser2 = new ChromiumWebBrowser();
-            Task.Run(() => ProfileData());
+                Task.Run(() => ProfileData());
             Task.Run(() => RefreshTimer());
         }
 
@@ -126,8 +125,12 @@ namespace WindowsFormsApp1
                     await CheckData();
                 }
                 //await Task.Delay(30000);
-                await Task.Run(() => CheckPrices());
-                //await CheckStore();
+                await CheckPrices();
+                await CheckStore();
+                //chromiumWebBrowser1 = new ChromiumWebBrowser();
+                //chromiumWebBrowser2 = new ChromiumWebBrowser();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
 
@@ -163,135 +166,153 @@ namespace WindowsFormsApp1
 
         private static async Task CheckStore()
         {
-            string uri = "https://app-api.salad.io/api/v1/rewards/";
-            chromiumWebBrowser2.Load(uri);
-            await Task.Delay(3000);
-            Task<string> task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
-            while (task == null)
+            if (postIfStoreChange)
             {
-                task = Task.Run(() => chromiumWebBrowser1.GetSourceAsync());
-            }
-            string[] Temp = task.Result.Split('[', ']');
-            List<GameData> Store = new List<GameData>();
-            for (int i = 1; i < Temp.Length - 1; i++)
-            {
-                GameData temp2 = LoadGameData(Temp[i]);
-                Store.Add(temp2);
-            }
-            string StorePriceChanges = "";
-            string StoreProductChanges = "";
-            for (int i = 0; i < Store.Count; i++)
-            {
-                bool test = false;
-                for (int a = 0; a < StoreProducts.Count; a++)
+                string uri = "https://app-api.salad.io/api/v1/rewards/";
+                string temp3 = LoadWebPage(uri, true).Result;
+                temp3 = temp3.Replace("[{", "");
+                temp3 = temp3.Replace("}]", "}");
+                string[] temp2 = temp3.Split(new string[] { ",{" }, StringSplitOptions.None);
+                List<GameData> Store = new List<GameData>();
+                for (int i = 0; i < temp2.Length; i++)
                 {
-                    if (Store[i].id == StoreProducts[a].id)
+                    Store.Add(LoadGameData("{" + temp2[i]));
+                }
+                string StorePriceChanges = "";
+                string StoreProductChanges = "";
+                for (int i = 0; i < Store.Count; i++)
+                {
+                    bool test = false;
+                    for (int a = 0; a < StoreProducts.Count; a++)
                     {
-                        test = true;
-                        if (Store[i].price != StoreProducts[a].price)
+                        if (Store[i].id == StoreProducts[a].id)
                         {
-                            float temp = float.Parse(Store[i].price) - float.Parse(StoreProducts[a].price);
-                            string tempbal;
-                            if (temp > 0)
+                            test = true;
+                            if (Store[i].price != StoreProducts[a].price)
                             {
-                                tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                                float temp = float.Parse(Store[i].price) - float.Parse(StoreProducts[a].price);
+                                string tempbal;
+                                if (temp > 0)
+                                {
+                                    tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                                }
+                                else
+                                {
+                                    tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                                }
+                                StorePriceChanges += Store[i].name + ": $" + Store[i].price + " ($" + Store[i].price + ")" + Environment.NewLine;
                             }
-                            else
-                            {
-                                tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
-                            }
-                            StorePriceChanges += Store[i].name + ": $" + Store[i].price + " ($" + Store[i].price + ")" + Environment.NewLine;
+                            break;
                         }
-                        break;
+                    }
+                    if (!test)
+                    {
+                        StoreProductChanges += Store[i].name + ": $" + Store[i].price + "" + Environment.NewLine;
                     }
                 }
-                if (!test)
-                {
-                    StoreProductChanges += Store[i].name + ": $" + Store[i].price + "" + Environment.NewLine;
-                }
-            }
-            var client = new DiscordWebhookClient(Webhook);
+                var client = new DiscordWebhookClient(Webhook);
 
-            var embed = new EmbedBuilder
-            {
-                Title = "Store Changes",
-            };
-            if (StorePriceChanges != "" && StoreProductChanges != "")
-            {
-                if (StorePriceChanges != "")
+                var embed = new EmbedBuilder
                 {
-                    embed.AddField("Price Changes", StorePriceChanges);
-                }
-                if (StoreProductChanges != "")
+                    Title = "Store Changes",
+                };
+                if (StorePriceChanges != "" || StoreProductChanges != "")
                 {
-                    embed.AddField("Price Changes", StoreProductChanges);
+                    if (StorePriceChanges != "" && StorePriceChanges.Length <= 2048)
+                    {
+                        if (StorePriceChanges.Length <= 2048)
+                        {
+                            embed.AddField("Price Changes", StorePriceChanges);
+                        }
+                        else
+                        {
+                            embed.AddField("Price Changes", Regex.Matches(StorePriceChanges, "\n").Count.ToString() + " Items have changed prices");
+                        }
+                    }
+                    if (StoreProductChanges != "")
+                    {
+                        if (StoreProductChanges.Length <= 2048)
+                        {
+                            embed.AddField("Product Changes", StoreProductChanges);
+                        }
+                        else
+                        {
+                            embed.AddField("Product Changes", Regex.Matches(StoreProductChanges, "\n").Count.ToString() + " Items have been added");
+                        }
+                    }
+                    embed.Timestamp = DateTimeOffset.Now;
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO Shop", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                    StoreProducts = Store;
+                    ProductDataSaving.Save();
                 }
-                embed.Timestamp = DateTimeOffset.Now;
-                await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO Shop", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
-                //StoreProducts = Store;
-                //ProductDataSaving.Save();
             }
         }
 
         private static async Task CheckPrices()
         {
-            for (int i = 0; i < ProductTracking.Count; i++)
+            if (ProductTracking.Count != 0)
             {
-                string temp2 = await LoadWebPage("https://app-api.salad.io/api/v1/rewards/" + ProductTracking[i].id);
-                GameData data = LoadGameData(temp2);
-                if (ProductTracking[i].price != data.price)
+                for (int i = 0; i < ProductTracking.Count; i++)
                 {
-                    var client = new DiscordWebhookClient(Webhook);
+                    string temp2 = await LoadWebPage("https://app-api.salad.io/api/v1/rewards/" + ProductTracking[i].id);
+                    GameData data = LoadGameData(temp2);
+                    if (ProductTracking[i].price != data.price)
+                    {
+                        var client = new DiscordWebhookClient(Webhook);
 
-                    var embed = new EmbedBuilder
-                    {
-                        Title = data.name,
-                    };
-                    float temp = float.Parse(ProductTracking[i].price) - float.Parse(data.price);
-                    string tempbal;
-                    if (temp > 0)
-                    {
-                        embed.Color = Color.Green;
-                        tempbal = " (-$" + Math.Round(temp, 4).ToString() + ")";
+                        var embed = new EmbedBuilder
+                        {
+                            Title = data.name,
+                        };
+                        float temp = float.Parse(ProductTracking[i].price) - float.Parse(data.price);
+                        string tempbal;
+                        if (temp > 0)
+                        {
+                            embed.Color = Color.Green;
+                            tempbal = " (-$" + Math.Round(temp, 4).ToString() + ")";
+                        }
+                        else
+                        {
+                            embed.Color = Color.Red;
+                            tempbal = " (+$" + Math.Round(temp - temp + temp, 4).ToString() + ")";
+                        }
+                        embed.ImageUrl = "https://app-api.salad.io" + data.image;
+                        embed.Description = "Price: $" + data.price + " " + tempbal;
+                        embed.AddField("Description", data.description);
+                        embed.Timestamp = DateTimeOffset.Now;
+                        ProductTracking[i] = data;
+                        embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
+                        await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                     }
-                    else
-                    {
-                        embed.Color = Color.Red;
-                        tempbal = " (+$" + Math.Round(temp - temp + temp, 4).ToString() + ")";
-                    }
-                    embed.ImageUrl = "https://app-api.salad.io" + data.image;
-                    embed.Description = "Price: $" + data.price + " " + tempbal;
-                    embed.AddField("Description", data.description);
-                    embed.Timestamp = DateTimeOffset.Now;
-                    ProductTracking[i] = data;
-                    embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
-                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
+                ProductDataSaving.Save();
             }
-            ProductDataSaving.Save();
         }
 
         private static async Task Refresh()
         {
             string uri = "https://app.salad.io/earn/summary";
-            chromiumWebBrowser2.Load(uri);
+            chromiumWebBrowser1.Load(uri);
             await Task.Delay(1000);
-            while (chromiumWebBrowser2.IsLoading)
+            while (chromiumWebBrowser1.IsLoading)
             {
                 await Task.Delay(100);
             }
-            await Task.Delay(2000);
+            await Task.Delay(3000);
         }
 
-        private static async Task<string> LoadWebPage(string uri)
+        private static async Task<string> LoadWebPage(string uri, bool wait = false)
         {
             chromiumWebBrowser1.Load(uri);
-            await Task.Delay(2000);
-            while (chromiumWebBrowser2.IsLoading)
+            //if(wait)
+            //{
+            //    await Task.Delay(5000);
+            //}
+            await Task.Delay(1000);
+            while (chromiumWebBrowser1.IsLoading)
             {
                 await Task.Delay(100);
             }
-            await Task.Delay(1000);
             string temp;
             Task<string> task = chromiumWebBrowser1.GetSourceAsync();
             while (task == null && task.Result == "")
@@ -390,50 +411,50 @@ namespace WindowsFormsApp1
                 }
             }
         }
-        public static dynamic StripJson(string JsonFile)
-        {
-            return JValue.Parse(JsonFile);
-            //List<JsonDetails> file = new List<JsonDetails>();
-            //string[] Dump;
-            //string Dump2;
-            //List<string> Dump3 = new List<string>();
-            //JsonDetails temp = new JsonDetails();
-            //Dump2 = JsonFile.Replace("{", "");
-            //Dump2 = Dump2.Replace("}", "");
-            //Dump = Dump2.Split(new string[] { ",\"" }, StringSplitOptions.None);
-            //string boo = "";
-            //for (int a = 0; a < Dump.Length; a++)
-            //{
-            //    if (Dump[a].Contains(":"))
-            //    {
-            //        if (Dump[a].Contains("[") && !Dump[a].Contains("]"))
-            //        {
-            //            boo += Dump[a];
-            //        }
-            //        else
-            //        {
-            //            Dump3.Add(Dump[a]);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        boo += Dump[a];
-            //        if (Dump[a].Contains("]"))
-            //        {
-            //            Dump3.Add(boo);
-            //            boo = "";
-            //        }
-            //    }
-            //}
-            //for (int i = 0; i < Dump3.Count; i++)
-            //{
-            //    string[] Lines = Dump3[i].Replace("\"","").Split(':');
-            //    temp.Line1 = Lines[0].ToLower();
-            //    temp.Line2 = Lines[1].Replace("\n", Environment.NewLine);
-            //    file.Add(temp);
-            //}
-            //return file;
-        }
+        //public static dynamic StripJson(string JsonFile)
+        //{
+        //    return JValue.Parse(JsonFile);
+        //    List<JsonDetails> file = new List<JsonDetails>();
+        //    string[] Dump;
+        //    string Dump2;
+        //    List<string> Dump3 = new List<string>();
+        //    JsonDetails temp = new JsonDetails();
+        //    Dump2 = JsonFile.Replace("{", "");
+        //    Dump2 = Dump2.Replace("}", "");
+        //    Dump = Dump2.Split(new string[] { ",\"" }, StringSplitOptions.None);
+        //    string boo = "";
+        //    for (int a = 0; a < Dump.Length; a++)
+        //    {
+        //        if (Dump[a].Contains(":"))
+        //        {
+        //            if (Dump[a].Contains("[") && !Dump[a].Contains("]"))
+        //            {
+        //                boo += Dump[a];
+        //            }
+        //            else
+        //            {
+        //                Dump3.Add(Dump[a]);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            boo += Dump[a];
+        //            if (Dump[a].Contains("]"))
+        //            {
+        //                Dump3.Add(boo);
+        //                boo = "";
+        //            }
+        //        }
+        //    }
+        //    for (int i = 0; i < Dump3.Count; i++)
+        //    {
+        //        string[] Lines = Dump3[i].Replace("\"", "").Split(':');
+        //        temp.Line1 = Lines[0].ToLower();
+        //        temp.Line2 = Lines[1].Replace("\n", Environment.NewLine);
+        //        file.Add(temp);
+        //    }
+        //    return file;
+        //}
 
         public static GameData LoadGameData(string Json)
         {
