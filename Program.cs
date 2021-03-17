@@ -65,14 +65,27 @@ namespace WindowsFormsApp1
             Icon = new NoficationIcon();
             Application.Run(Icon);
         }
-        //public static void GenerateFruit()
+        ////public static void GenerateFruit()
         //{
         //    FruitXp.Add(60);
-        //    FruitXp.Add((FruitXp[0] * 2) + FruitXp[0]);
-        //    for (int i = 2; i < 19; i++)
-        //    {
-        //        FruitXp.Add((FruitXp[i - 1] + FruitXp[i - 2] + ());
-        //    }
+        //    FruitXp.Add(180);
+        //    FruitXp.Add(420);
+        //    FruitXp.Add(780);
+        //    FruitXp.Add(1380);
+        //    FruitXp.Add(2280);
+        //    FruitXp.Add(3660);
+        //    FruitXp.Add(5700);
+        //    FruitXp.Add(8580);
+        //    FruitXp.Add(12540);
+        //    FruitXp.Add(17940);
+        //    FruitXp.Add(25080);
+        //    FruitXp.Add(34440);
+        //    FruitXp.Add(46380);
+        //    FruitXp.Add(61440);
+
+        //    //FruitXp.Add(34440);
+        //    //FruitXp.Add(46380);
+        //    //FruitXp.Add(61440);
         //}
         public static void LoadSavedData()
         {
@@ -296,7 +309,7 @@ namespace WindowsFormsApp1
             await Task.Delay(1000);
             while (chromiumWebBrowser1.IsLoading)
             {
-                await Task.Delay(100);
+                await Task.Delay(1000);
             }
             await Task.Delay(3000);
         }
@@ -392,15 +405,15 @@ namespace WindowsFormsApp1
                         if (temp > 0)
                         {
                             embed.Color = Color.Green;
-                            tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                            tempbal = " ($+" + Math.Round(temp, 3).ToString("#,##0.###") + ")";
                         }
                         else
                         {
                             embed.Color = Color.Red;
-                            tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                            tempbal = " ($" + Math.Round(temp, 3).ToString("#,##0.###") + ")";
                         }
                     }
-                    embed.Description = "Current Balance: $" + Balance.Substring(0,5) + tempbal + Environment.NewLine + "Lifetime Earnings: $" + lifetimeBalance.Substring(0, 5) + Environment.NewLine + "Livetime XP: " + lifetimeXP;
+                    embed.Description = "Current Balance: $" + Math.Round(float.Parse(Balance), 3).ToString("#,##0.###") + tempbal + Environment.NewLine + "Lifetime Earnings: $" + Math.Round(float.Parse(lifetimeBalance), 3).ToString("#,##0.###") + Environment.NewLine + "Livetime XP: " + float.Parse(lifetimeXP).ToString("#,##0.###");
                     embed.Footer = new EmbedFooterBuilder { Text = "Referal Code: " + ReferalCode };
                     embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
