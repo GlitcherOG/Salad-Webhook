@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -56,6 +57,8 @@ namespace WindowsFormsApp1
         static void Main()
         {
             //GenerateFruit();
+            AutoUpdater.ShowSkipButton = false;
+            AutoUpdater.Start("https://raw.githubusercontent.com/GlitcherOG/Salad-Webhook/main/Update.xml");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             var settings = new CefSettings();
