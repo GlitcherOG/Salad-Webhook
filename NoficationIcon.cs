@@ -22,6 +22,7 @@ namespace WindowsFormsApp1
             Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
             InitializeComponent();
             TrayIcon.Visible = true;
+            TrayIcon.ShowBalloonTip(5);
         }
 
         public void UpdateTooltip()
@@ -43,6 +44,8 @@ namespace WindowsFormsApp1
 
             TrayIcon.Text = "Salad Webhook";
 
+            TrayIcon.BalloonTipText = "Webhook has been started";
+            TrayIcon.BalloonTipTitle = "Salad Webhook Started";
             TrayIcon.Icon = Properties.Resources.Icon1;
             TrayIconContextMenu = new ContextMenuStrip();
             TrayIconContextMenu.SuspendLayout();

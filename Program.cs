@@ -37,8 +37,10 @@ namespace WindowsFormsApp1
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser1;
         static NoficationIcon Icon;
         public static List<GameData> ProductTracking = new List<GameData>();
+        public static List<bool> WishlistCheck = new List<bool>();
         public static List<GameData> StoreProducts = new List<GameData>();
         public static List<int> FruitXp = new List<int>();
+        public static List<string> AmmountCheck = new List<string>();
         public static SettingsSaveLoad Saving = new SettingsSaveLoad();
         public static ProductDataSaveLoad ProductDataSaving = new ProductDataSaveLoad();
         static List<JsonDetails> Temp = new List<JsonDetails>();
@@ -58,7 +60,7 @@ namespace WindowsFormsApp1
         {
             //GenerateFruit();
             AutoUpdater.ShowSkipButton = false;
-            AutoUpdater.Start("https://raw.githubusercontent.com/GlitcherOG/Salad-Webhook/main/Update.xml");
+            //AutoUpdater.Start("https://raw.githubusercontent.com/GlitcherOG/Salad-Webhook/main/Update.xml");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             var settings = new CefSettings();
@@ -112,6 +114,11 @@ namespace WindowsFormsApp1
             if (ProductDataSaving != null)
             {
                 ProductTracking = ProductDataSaving.TrackedProducts;
+                for (int i = 0; i < ProductTracking.Count; i++)
+                {
+                    WishlistCheck.Add(false);
+                    AmmountCheck.Add(null);
+                }
                 StoreProducts = ProductDataSaving.AllProducts;
             }
             else
@@ -142,7 +149,7 @@ namespace WindowsFormsApp1
                 }
                 //await Task.Delay(30000);
                 await CheckPrices();
-                await CheckStore();
+                //await CheckStore();
                 //chromiumWebBrowser1 = new ChromiumWebBrowser();
                 //chromiumWebBrowser2 = new ChromiumWebBrowser();
                 GC.Collect();
@@ -155,18 +162,22 @@ namespace WindowsFormsApp1
             bool Test = false;
             for (int i = 0; i < ProductTracking.Count; i++)
             {
-                if (Address.TrimStart("https://app-api.salad.io/api/v1/rewards/".ToCharArray()) == ProductTracking[i].id)
+                if (Address.Substring(40) == ProductTracking[i].id)
                 {
                     Test = true;
                     ProductTracking.RemoveAt(i);
                     NoficationIcon.storeform.UpdateButton();
                     ProductDataSaving.Save();
+                    WishlistCheck.RemoveAt(i);
+                    AmmountCheck.RemoveAt(i);
                 }
             }
             if (!Test)
             {
                 string temp2 = await LoadWebPage(Address);
                 ProductTracking.Add(LoadGameData(temp2));
+                WishlistCheck.Add(false);
+                AmmountCheck.Add(null);
                 //GameData temp = ProductTracking[0];
                 //temp.price = "100";
                 //ProductTracking[0] = temp;
@@ -245,17 +256,17 @@ namespace WindowsFormsApp1
                             embed.AddField("Price Changes", Regex.Matches(StorePriceChanges, "\n").Count.ToString() + " Items have changed prices");
                         }
                     }
-                    if (StoreProductChanges != "")
-                    {
-                        if (StoreProductChanges.Length <= 2048)
-                        {
-                            embed.AddField("Product Changes", StoreProductChanges);
-                        }
-                        else
-                        {
-                            embed.AddField("Product Changes", Regex.Matches(StoreProductChanges, "\n").Count.ToString() + " Items have been added");
-                        }
-                    }
+                    //if (StoreProductChanges != "")
+                    //{
+                    //    if (StoreProductChanges.Length <= 2048)
+                    //    {
+                    //        embed.AddField("Product Changes", StoreProductChanges);
+                    //    }
+                    //    else
+                    //    {
+                    //        embed.AddField("Product Changes", Regex.Matches(StoreProductChanges, "\n").Count.ToString() + " Items have been added");
+                    //    }
+                    //}
                     embed.Timestamp = DateTimeOffset.Now;
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO Shop", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                     StoreProducts = Store;
@@ -266,6 +277,10 @@ namespace WindowsFormsApp1
 
         private static async Task CheckPrices()
         {
+            var client = new DiscordWebhookClient(Webhook);
+            string PriceChange = "";
+            string QuantityChange = "";
+            string EarntEnough = "";
             if (ProductTracking.Count != 0)
             {
                 for (int i = 0; i < ProductTracking.Count; i++)
@@ -274,34 +289,93 @@ namespace WindowsFormsApp1
                     GameData data = LoadGameData(temp2);
                     if (ProductTracking[i].price != data.price)
                     {
-                        var client = new DiscordWebhookClient(Webhook);
-
-                        var embed = new EmbedBuilder
-                        {
-                            Title = data.name,
-                        };
                         float temp = float.Parse(ProductTracking[i].price) - float.Parse(data.price);
                         string tempbal;
                         if (temp > 0)
                         {
-                            embed.Color = Color.Green;
                             tempbal = " (-$" + Math.Round(temp, 4).ToString() + ")";
                         }
                         else
                         {
-                            embed.Color = Color.Red;
                             tempbal = " (+$" + Math.Round(temp - temp + temp, 4).ToString() + ")";
                         }
-                        embed.ImageUrl = "https://app-api.salad.io" + data.image;
-                        embed.Description = "Price: $" + data.price + " " + tempbal;
-                        embed.AddField("Description", data.description);
-                        embed.Timestamp = DateTimeOffset.Now;
+                        PriceChange = data.name + ": $" + Math.Round(float.Parse(data.price), 2).ToString() + " " + tempbal + Environment.NewLine;
+                    }
+                    if (ProductTracking[i].quantity != data.quantity)
+                    {
+                        if (float.Parse(data.quantity) <= 5)
+                        {
+                            QuantityChange = data.name + " (" + data.quantity + " remaning)" + Environment.NewLine;
+                        }
+                        else if (float.Parse(data.quantity) == 0)
+                        {
+                            QuantityChange = data.name + "(Out of Stock)" + Environment.NewLine;
+                        }
+                        else if (float.Parse(data.quantity) > float.Parse(ProductTracking[i].quantity))
+                        {
+                            QuantityChange = data.name + " (" + data.quantity + " Now in Stock)" + Environment.NewLine;
+                        }
                         ProductTracking[i] = data;
-                        embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
-                        await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                    }
+                    if (!WishlistCheck[i])
+                    {
+                        float temp = float.Parse(ProductTracking[i].price);
+                        float temp3 = float.Parse(Balance);
+                        if (temp <= temp3)
+                        {
+                            EarntEnough += data.name + ": $" + Math.Round(float.Parse(data.price), 2).ToString() + Environment.NewLine;
+                            ProductTracking[i] = data;
+                            WishlistCheck[i] = true;
+                        }
                     }
                 }
                 ProductDataSaving.Save();
+                var embed = new EmbedBuilder
+                {
+                    Title = "Congradulations You Have Chopped Enought For:",
+                };
+                embed.Color = Color.Green;
+                embed.Timestamp = DateTimeOffset.Now;
+                embed.ThumbnailUrl = "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png";
+                if (EarntEnough != "")
+                {
+                    if (EarntEnough.Length <= 2048)
+                    {
+                        embed.Description = EarntEnough;
+                    }
+                    else
+                    {
+                        embed.Description = Regex.Matches(EarntEnough, "\n").Count.ToString() + " Items";
+                    }
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                }
+                if (QuantityChange != "")
+                {
+                    embed.Title = "Wishlist Quanity Change:";
+                    if (QuantityChange.Length <= 2048)
+                    {
+                        embed.Description = QuantityChange;
+                    }
+                    else
+                    {
+                        embed.Description = Regex.Matches(QuantityChange, "\n").Count.ToString() + " Items have changed the ammount remaining.";
+                    }
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                }
+                if (PriceChange != "")
+                {
+                    embed.Title = "Price Change:";
+                    embed.Description = PriceChange;
+                    if (PriceChange.Length <= 2048)
+                    {
+                        embed.Description = PriceChange;
+                    }
+                    else
+                    {
+                        embed.Description = Regex.Matches(PriceChange, "\n").Count.ToString() + " Items have changed prices.";
+                    }
+                    await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
+                }
             }
         }
 
@@ -414,6 +488,10 @@ namespace WindowsFormsApp1
                         {
                             embed.Color = Color.Red;
                             tempbal = " ($" + Math.Round(temp, 3).ToString("#,##0.###") + ")";
+                            for (int i = 0; i < WishlistCheck.Count; i++)
+                            {
+                                WishlistCheck[i] = false;
+                            }
                         }
                     }
                     embed.Description = "Current Balance: $" + Math.Round(float.Parse(Balance), 3).ToString("#,##0.###") + tempbal + Environment.NewLine + "Lifetime Earnings: $" + Math.Round(float.Parse(lifetimeBalance), 3).ToString("#,##0.###") + Environment.NewLine + "Livetime XP: " + float.Parse(lifetimeXP).ToString("#,##0.###");
@@ -481,16 +559,20 @@ namespace WindowsFormsApp1
             data.name = temp.name;
             data.price = temp.price;
             data.image = temp.coverImage;
-            data.description = temp2.Replace("<div>", "");
-            data.description = data.description.Replace("<p>", "");
-            data.description = data.description.Replace("<br />", "");
-            data.description = data.description.Replace("</p>", "");
-            data.description = data.description.Replace("</p>", "");
-            data.description = data.description.Replace("<ul>", "");
-            data.description = data.description.Replace("<li>", "");
-            data.description = data.description.Replace("</li>", "");
-            data.description = data.description.Replace("</ul>", "");
-            data.description = data.description.Replace("</div>", "");
+            data.quantity = temp.quantity;
+            if (temp2 != null)
+            {
+                data.description = temp2.Replace("<div>", "");
+                data.description = data.description.Replace("<p>", "");
+                data.description = data.description.Replace("<br />", "");
+                data.description = data.description.Replace("</p>", "");
+                data.description = data.description.Replace("</p>", "");
+                data.description = data.description.Replace("<ul>", "");
+                data.description = data.description.Replace("<li>", "");
+                data.description = data.description.Replace("</li>", "");
+                data.description = data.description.Replace("</ul>", "");
+                data.description = data.description.Replace("</div>", "");
+            }
             return data;
         }
     }
@@ -501,7 +583,9 @@ public struct GameData
     public string id;
     public string name;
     public string price;
+    public bool Checked;
     public string description;
+    public string quantity;
     public string category;
     public string image;
 }
