@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace WindowsFormsApp1
 {
@@ -32,9 +33,27 @@ namespace WindowsFormsApp1
         //https://app-api.salad.io/api/v1/rewards/
         //https://app-api.salad.io/login
         //https://app-api.salad.io/logout
-        //Xp Works in a ratio of 1:3:7:13:23:38. Add previous one and one before and add 3
+        //https://app-api.salad.io/api/v2/changelog
+        //https://app-api.salad.io/api/v2/seasons/current
+        //https://app-api.salad.io/api/v2/bonuses/earning-rate
+        //https://app-api.salad.io/api/v2/avatars
+        //https://app-api.salad.io/api/v2/avatars/selected
+        //   new Level('carrot', 'Carrot', 0, 20),
+        //   new Level('lettuce', 'Lettuce', 20, 50),
+        //   new Level('tomato', 'Tomato', 50, 100),
+        //   new Level('cucumber', 'Cucumber', 100, 1000),
+        //   new Level('beet', 'Beet', 1000, 5000),
+        //   new Level('spinach', 'Spinach', 5000, 10000),
+        //   new Level('mushroom', 'Mushroom', 10000, 20000),
+        //   new Level('red-pepper', 'Red Pepper', 20000, 30000),
+        //   new Level('avocado', 'Avocado', 30000, 50000),
+        //   new Level('red-onion', 'Red Onion', 50000, 75000),
+        //   new Level('olives', 'Olives', 75000, 100000),
+        //   new Level('broccoli', 'Broccoli', 100000, 150000),
+        //   new Level('blue-cheese', 'Blue Cheese', 150000, 250000)
 
         static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser1;
+        //static CefSharp.OffScreen.ChromiumWebBrowser chromiumWebBrowser2;
         static NoficationIcon Icon;
         public static List<GameData> ProductTracking = new List<GameData>();
         public static List<bool> WishlistCheck = new List<bool>();
@@ -54,6 +73,7 @@ namespace WindowsFormsApp1
         static string lifetimeBalance;
         static string lifetimeXP;
         static string ReferalCode;
+        static bool Wait;
 
         [STAThread]
         static void Main()
@@ -129,25 +149,46 @@ namespace WindowsFormsApp1
         public static void LoadEarnings()
         {
             chromiumWebBrowser1 = new ChromiumWebBrowser();
-                Task.Run(() => ProfileData());
-            Task.Run(() => RefreshTimer());
+            Task.Run(() => Startup());
+        }
+
+        private static async Task Startup()
+        {
+            await CheckPrices();
+            //while(Wait)
+            //{
+            //    await Task.Delay(100);
+            //}
+            //await Refresh();
+            //await ProfileData();
+            //await RefreshTimer();
+
         }
 
         private static async Task RefreshTimer()
         {
             while (true)
             {
+                Debug.WriteLine("Here");
                 await Task.Delay(1000 * waittime * 60);
+                while(Wait)
+                {
+                    Debug.WriteLine("Waiting");
+                    await Task.Delay(100);
+                }
                 if (username == null || username == "")
                 {
+                    Debug.WriteLine("Loading profiledata");
                     await Task.Run(() => ProfileData());
                 }
                 else
                 {
-                    await Refresh();
+                    //await Refresh();
+                    Debug.WriteLine("Checking Data");
                     await CheckData();
                 }
-                //await Task.Delay(30000);
+                await Task.Delay(5000);
+                Debug.WriteLine("Checking Prices");
                 await CheckPrices();
                 //await CheckStore();
                 //chromiumWebBrowser1 = new ChromiumWebBrowser();
@@ -277,6 +318,7 @@ namespace WindowsFormsApp1
 
         private static async Task CheckPrices()
         {
+            Wait = true;
             var client = new DiscordWebhookClient(Webhook);
             string PriceChange = "";
             string QuantityChange = "";
@@ -285,48 +327,61 @@ namespace WindowsFormsApp1
             {
                 for (int i = 0; i < ProductTracking.Count; i++)
                 {
+                    Debug.WriteLine(i);
                     string temp2 = await LoadWebPage("https://app-api.salad.io/api/v1/rewards/" + ProductTracking[i].id);
-                    GameData data = LoadGameData(temp2);
-                    if (ProductTracking[i].price != data.price)
+                    if (temp2 != "")
                     {
-                        float temp = float.Parse(ProductTracking[i].price) - float.Parse(data.price);
-                        string tempbal;
-                        if (temp > 0)
+                        GameData data = LoadGameData(temp2);
+                        if (ProductTracking[i].price != data.price)
                         {
-                            tempbal = " (-$" + Math.Round(temp, 4).ToString() + ")";
+                            float temp = float.Parse(ProductTracking[i].price) - float.Parse(data.price);
+                            string tempbal;
+                            if (temp > 0)
+                            {
+                                tempbal = " ($+" + Math.Round(temp, 4).ToString() + ")";
+                            }
+                            else
+                            {
+                                tempbal = " ($" + Math.Round(temp, 4).ToString() + ")";
+                            }
+                            PriceChange += data.name + ": $" + Math.Round(float.Parse(data.price), 2).ToString() + " " + tempbal + Environment.NewLine;
                         }
-                        else
+                        if (ProductTracking[i].quantity != data.quantity)
                         {
-                            tempbal = " (+$" + Math.Round(temp - temp + temp, 4).ToString() + ")";
+                            if (data.quantity != "" && data.quantity != null)
+                            {
+                                if (float.Parse(data.quantity) <= 5)
+                                {
+                                    QuantityChange += data.name + " (" + data.quantity + " remaning)" + Environment.NewLine;
+                                }
+                                else if (float.Parse(data.quantity) == 0)
+                                {
+                                    QuantityChange += data.name + "(Out of Stock)" + Environment.NewLine;
+                                }
+                                else if (float.Parse(data.quantity) > float.Parse(ProductTracking[i].quantity))
+                                {
+                                    QuantityChange += data.name + " (" + data.quantity + " Now in Stock)" + Environment.NewLine;
+                                }
+                            }
                         }
-                        PriceChange = data.name + ": $" + Math.Round(float.Parse(data.price), 2).ToString() + " " + tempbal + Environment.NewLine;
-                    }
-                    if (ProductTracking[i].quantity != data.quantity)
-                    {
-                        if (float.Parse(data.quantity) <= 5)
+                        if (!WishlistCheck[i])
                         {
-                            QuantityChange = data.name + " (" + data.quantity + " remaning)" + Environment.NewLine;
-                        }
-                        else if (float.Parse(data.quantity) == 0)
-                        {
-                            QuantityChange = data.name + "(Out of Stock)" + Environment.NewLine;
-                        }
-                        else if (float.Parse(data.quantity) > float.Parse(ProductTracking[i].quantity))
-                        {
-                            QuantityChange = data.name + " (" + data.quantity + " Now in Stock)" + Environment.NewLine;
+                            float temp = float.Parse(ProductTracking[i].price);
+                            float temp3 = float.Parse(Balance);
+                            if (temp <= temp3)
+                            {
+                                EarntEnough += data.name + ": $" + Math.Round(float.Parse(data.price), 2).ToString() + Environment.NewLine;
+                                ProductTracking[i] = data;
+                                WishlistCheck[i] = true;
+                            }
                         }
                         ProductTracking[i] = data;
                     }
-                    if (!WishlistCheck[i])
+                    else
                     {
-                        float temp = float.Parse(ProductTracking[i].price);
-                        float temp3 = float.Parse(Balance);
-                        if (temp <= temp3)
-                        {
-                            EarntEnough += data.name + ": $" + Math.Round(float.Parse(data.price), 2).ToString() + Environment.NewLine;
-                            ProductTracking[i] = data;
-                            WishlistCheck[i] = true;
-                        }
+                        GameData data = ProductTracking[i];
+                        data.quantity = "-1";
+                        ProductTracking[i] = data;
                     }
                 }
                 ProductDataSaving.Save();
@@ -377,6 +432,7 @@ namespace WindowsFormsApp1
                     await client.SendMessageAsync("", false, embeds: new[] { embed.Build() }, "Salad.IO", "https://cdn.discordapp.com/attachments/814311805689528350/820600423512932382/logo.png");
                 }
             }
+            Wait = false;
         }
 
         private static async Task Refresh()
@@ -401,7 +457,7 @@ namespace WindowsFormsApp1
             await Task.Delay(1000);
             while (chromiumWebBrowser1.IsLoading)
             {
-                await Task.Delay(100);
+                await Task.Delay(1000);
             }
             string temp;
             Task<string> task = chromiumWebBrowser1.GetSourceAsync();
@@ -553,15 +609,15 @@ namespace WindowsFormsApp1
         public static GameData LoadGameData(string Json)
         {
             dynamic temp = LoadJson(Json);
-            string temp2 = temp.description;
             GameData data = new GameData();
             data.id = temp.id;
             data.name = temp.name;
             data.price = temp.price;
             data.image = temp.coverImage;
             data.quantity = temp.quantity;
-            if (temp2 != null)
+            if (temp.description != null && temp.description != "")
             {
+                string temp2 = temp.description;
                 data.description = temp2.Replace("<div>", "");
                 data.description = data.description.Replace("<p>", "");
                 data.description = data.description.Replace("<br />", "");
